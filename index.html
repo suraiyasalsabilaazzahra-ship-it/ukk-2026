@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Informasi UKK 2026</title>
+</head>
+<body>
+
+  <!-- ================= 1. BAGIAN LOGIN ================= -->
+  <section id="halaman-login">
+    <header>
+      <h1>Portal UKK 2026</h1>
+      <p>Silakan masuk menggunakan akun Anda</p>
+    </header>
+
+    <hr>
+
+    <main>
+      <form id="formLogin">
+        <div>
+          <label for="email">Email / Username:</label><br>
+          <input type="text" id="email" name="email" placeholder="Masukkan Email" required>
+        </div>
+        
+        <br>
+
+        <div>
+          <label for="password">Kata Sandi:</label><br>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <br>
+
+        <div>
+          <button type="submit">Masuk Dashboard</button>
+        </div>
+      </form>
+
+      <br>
+
+      <fieldset>
+        <legend><strong>Pelanggaran Siswa</strong></legend>
+        <ul>
+          <li><strong>Guru:</strong> <code>guru@sekolah.sch.id</code> | Password: <code>guru123</code></li>
+          <li><strong>User / Admin:</strong> <code>admin@sekolah.sch.id</code> | Password: <code>admin123</code></li>
+        </ul>
+      </fieldset>
+    </main>
+  </section>
+
+  <!-- ================= 2. BAGIAN DASHBOARD ================= -->
+  <section id="halaman-dashboard" style="display: none;">
+    
+    <!-- Header Atas Dashboard -->
+    <header>
+      <h2>UKK System Dashboard</h2>
+      <p>
+        Pengguna: <strong id="nama-user">Nama User</strong> | 
+        Role: <mark id="role-user">Role</mark>
+      </p>
+      <button onclick="handleLogout()">Keluar (Logout)</button>
+    </header>
+
+    <hr>
+
+    <!-- Layout Utama: Sidebar (Navigasi Menu) + Main Content -->
+    <table border="0" width="100%" cellpadding="10">
+      <tr valign="top">
+        
+        <!-- Sidebar Menu Navigasi (Left Column) -->
+        <td width="20%">
+          <nav>
+            <h3>Navigasi Menu</h3>
+            <ul id="daftar-menu-sidebar">
+              <!-- Menu akan diisi dinamis oleh JS berdasarkan Role -->
+            </ul>
+          </nav>
+        </td>
+
+        <!-- Area Konten Utama (Right Column) -->
+        <td width="80%">
+          <main>
+            
+            <!-- Tab 1: Beranda / Dashboard -->
+            <article id="tab-dashboard" class="tab-content">
+              <h3 id="judul-tab1">Beranda</h3>
+              
+              <fieldset>
+                <legend>Statistik Ringkas</legend>
+                <ul id="ringkasan-statistik">
+                  <!-- Data statistik diisi lewat JS -->
+                </ul>
+              </fieldset>
+
+              <br>
+
+              <fieldset>
+                <legend>Informasi Sistem</legend>
+                <p>Selamat datang di Sistem Informasi UKK 2026. Pilih menu di sebelah kiri untuk mengelola data aplikasi.</p>
+              </fieldset>
+            </article>
+
+            <!-- Tab 2: Menu Kedua -->
+            <article id="tab-menu2" class="tab-content" style="display: none;">
+              <h3 id="judul-tab2">Menu 2</h3>
+              <table border="1" cellpadding="8" cellspacing="0" width="100%">
+                <thead>
+                  <tr id="header-tabel-2"></tr>
+                </thead>
+                <tbody id="body-tabel-2"></tbody>
+              </table>
+            </article>
+
+            <!-- Tab 3: Menu Ketiga -->
+            <article id="tab-menu3" class="tab-content" style="display: none;">
+              <h3 id="judul-tab3">Menu 3</h3>
+              <p id="deskripsi-tab3">Isi Konten Menu 3...</p>
+            </article>
+
+            <!-- Tab 4: Menu Keempat / Profil Guru -->
+            <article id="tab-menu4" class="tab-content" style="display: none;">
+              <h3 id="judul-tab4">Menu 4</h3>
+              <form id="form-profil">
+                <p>
+                  <label for="profile-name">Nama Lengkap:</label><br>
+                  <input type="text" id="profile-name" readonly>
+                </p>
+                <p>
+                  <label for="profile-email">Email:</label><br>
+                  <input type="text" id="profile-email" readonly>
+                </p>
+              </form>
+            </article>
+
+            <!-- Tab 5: Penempatan Siswa -->
+            <article id="tab-menu5" class="tab-content" style="display: none;">
+              <h3>5. Penempatan Siswa</h3>
+              <p>Halaman kelola penempatan siswa ke dalam kelas.</p>
+            </article>
+
+            <!-- Tab 6: Kategori Pelanggaran -->
+            <article id="tab-menu6" class="tab-content" style="display: none;">
+              <h3>6. Kategori Pelanggaran</h3>
+              <p>Halaman kelola jenis dan kategori pelanggaran siswa.</p>
+            </article>
+
+            <!-- Tab 7: Data Wali Kelas -->
+            <article id="tab-menu7" class="tab-content" style="display: none;">
+              <h3>7. Data Wali Kelas</h3>
+              <p>Halaman penugasan guru sebagai wali kelas.</p>
+            </article>
+
+          </main>
+        </td>
+
+      </tr>
+    </table>
+
+  </section>
+
+  <!-- ================= 3. JAVASCRIPT ================= -->
+  <script>
+    // Data 4 Menu Guru
+    const guruMenus = [
+      { id: 'dashboard', name: '1. Beranda Guru' },
+      { id: 'menu2', name: '2. Catat Pelanggaran' },
+      { id: 'menu3', name: '3. Tindakan' },
+      { id: 'menu4', name: '4. Profil Guru' }
+    ];
+
+    // Data 7 Menu Admin / User
+    const adminMenus = [
+      { id: 'dashboard', name: '1. Dashboard Admin' },
+      { id: 'menu2', name: '2. Data Guru' },
+      { id: 'menu3', name: '3. Data Kelas & Siswa' },
+      { id: 'menu4', name: '4. Data Tahun Ajaran' },
+      { id: 'menu5', name: '5. Penempatan Siswa' },
+      { id: 'menu6', name: '6. Kategori Pelanggaran' },
+      { id: 'menu7', name: '7. Data Wali Kelas' }
+    ];
+
+    // Event Form Login
+    document.getElementById('formLogin').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (email === 'guru@sekolah.sch.id' && password === 'guru123') {
+        bukaDashboard('Guru', 'Budi Santoso, S.Pd.', email);
+      } else if (email === 'admin@sekolah.sch.id' && password === 'admin123') {
+        bukaDashboard('Admin', 'Administrator', email);
+      } else {
+        alert('Email atau password salah!');
+      }
+    });
+
+    // Fungsi Menampilkan Dashboard
+    function bukaDashboard(role, nama, email) {
+      document.getElementById('halaman-login').style.display = 'none';
+      document.getElementById('halaman-dashboard').style.display = 'block';
+
+      document.getElementById('nama-user').innerText = nama;
+      document.getElementById('role-user').innerText = role;
+      document.getElementById('profile-name').value = nama;
+      document.getElementById('profile-email').value = email;
+
+      const menus = role === 'Guru' ? guruMenus : adminMenus;
+      const sidebarNav = document.getElementById('daftar-menu-sidebar');
+      sidebarNav.innerHTML = '';
+
+      menus.forEach(menu => {
+        sidebarNav.innerHTML += `
+          <li>
+            <a href="#" onclick="pindahTab('${menu.id}')">${menu.name}</a>
+          </li>
+        `;
+      });
+
+      // Tampilkan tab awal (Dashboard)
+      pindahTab('dashboard');
+
+      // Isian konten berdasarkan Role
+      if (role === 'Guru') {
+        document.getElementById('judul-tab1').innerText = 'Beranda Guru';
+        document.getElementById('ringkasan-statistik').innerHTML = `
+          <li>Kelas Diampu: 4 Kelas</li>
+          <li>Total Siswa: 120 Siswa</li>
+          <li>Pelanggaran Dicatat: 3 Kasus</li>
+        `;
+        document.getElementById('judul-tab2').innerText = 'Catat Pelanggaran Siswa';
+        document.getElementById('header-tabel-2').innerHTML = `<th>No</th><th>Nama Siswa</th><th>Pelanggaran</th><th>Poin</th>`;
+        document.getElementById('body-tabel-2').innerHTML = `
+          <tr><td>1</td><td>Ahmad Rizki</td><td>Terlambat Masuk</td><td>5</td></tr>
+          <tr><td>2</td><td>Siti Aminah</td><td>Tidak Memakai Seragam Lengkap</td><td>10</td></tr>
+        `;
+        document.getElementById('judul-tab3').innerText = 'Tindakan Pelanggaran';
+        document.getElementById('deskripsi-tab3').innerText = 'Halaman penanganan dan tindakan tindak lanjut pelanggaran siswa.';
+        document.getElementById('judul-tab4').innerText = 'Profil Guru';
+      } else {
+        document.getElementById('judul-tab1').innerText = 'Dashboard Admin';
+        document.getElementById('ringkasan-statistik').innerHTML = `
+          <li>Total Data Guru: 18 Orang</li>
+          <li>Total Siswa: 360 Siswa</li>
+          <li>Database Terhubung: db_ukk2026</li>
+        `;
+        document.getElementById('judul-tab2').innerText = 'Kelola Data Guru (Tabel t_guru)';
+        document.getElementById('header-tabel-2').innerHTML = `<th>ID</th><th>NIP</th><th>Nama Guru</th><th>Email</th><th>Status</th>`;
+        document.getElementById('body-tabel-2').innerHTML = `
+          <tr><td>1</td><td>198501152010011001</td><td>Budi Santoso, S.Pd.</td><td>guru@sekolah.sch.id</td><td>Aktif</td></tr>
+        `;
+        document.getElementById('judul-tab3').innerText = 'Kelola Data Kelas & Siswa';
+        document.getElementById('deskripsi-tab3').innerText = 'Halaman pengelolaan daftar kelas, siswa, dan jurusan.';
+        document.getElementById('judul-tab4').innerText = 'Data Tahun Ajaran';
+      }
+    }
+
+    // Fungsi Perpindahan Tab Menu (Otomatis Sembunyikan Semua Tab Aktif)
+    function pindahTab(tabId) {
+      const allTabs = document.querySelectorAll('.tab-content');
+      allTabs.forEach(tab => {
+        tab.style.display = 'none';
+      });
+
+      const selectedTab = document.getElementById(`tab-${tabId}`);
+      if (selectedTab) {
+        selectedTab.style.display = 'block';
+      }
+    }
+
+    // Fungsi Logout
+    function handleLogout() {
+      document.getElementById('halaman-dashboard').style.display = 'none';
+      document.getElementById('halaman-login').style.display = 'block';
+      document.getElementById('formLogin').reset();
+    }
+  </script>
+
+</body>
+</html>
