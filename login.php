@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="bg-light">
 
   <div class="container mt-5" style="max-width: 500px;">
-    <header class="p-3 mb-4 bg-success text-white rounded">
+    <header class="p-3 mb-4 bg-dark text-white rounded">
       <h1>Portal UKK 2026</h1>
       <p class="mb-0">Silakan masuk menggunakan akun Anda</p>
     </header>
