@@ -1,20 +1,19 @@
 <?php
 session_start();
-
-// Connect ke file koneksi database
 include 'koneksi.php';
 
-// Proteksi halaman dashboard
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     header("Location: login.php");
     exit();
 }
 
+// Variabel sesi harus didefinisikan di sini sebelum bagian HTML / include tab
 $role = $_SESSION['role'];
 $nama = $_SESSION['nama'];
 $email = $_SESSION['email'];
 
-// --- QUERY COUNT UNTUK CARD TAB DASHBOARD ---
+
+// Query hitung total harus ada DI ATAS sebelum file tab dipanggil
 $total_siswa_q = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
 $total_siswa   = ($total_siswa_q) ? mysqli_fetch_assoc($total_siswa_q)['total'] : 0;
 
@@ -24,9 +23,9 @@ $total_guru    = ($total_guru_q) ? mysqli_fetch_assoc($total_guru_q)['total'] : 
 $total_kelas_q = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas");
 $total_kelas   = ($total_kelas_q) ? mysqli_fetch_assoc($total_kelas_q)['total'] : 0;
 
-// Konfigurasi Menu Berdasarkan Role (Menu Kelas dan Siswa Dipisah)
-if ($role === 'Guru') {
-    $menus = [
+
+// Konfigurasi Menu Berdasarkan Role
+if ($role === 'Guru') {$menus = [
       ['id' => 'dashboard', 'name' => '1. Beranda Guru', 'icon' => 'bi-speedometer2'],
       ['id' => 'menu2', 'name' => '2. Catat Pelanggaran', 'icon' => 'bi-exclamation-octagon'],
       ['id' => 'menu3', 'name' => '3. Tindakan', 'icon' => 'bi-shield-check'],
@@ -70,11 +69,16 @@ if ($role === 'Guru') {
       color: #333;
     }
     
-    /* Sidebar Styling */
+    /* Sidebar Styling - Menempel/Sticky di Kiri */
     .sidebar {
       background: linear-gradient(180deg, #8b0000 0%, #5a0000 100%);
       box-shadow: 4px 0 15px rgba(0,0,0,0.08);
-      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
     }
 
     .sidebar .nav-link-custom {
@@ -182,7 +186,7 @@ if ($role === 'Guru') {
         <hr class="text-white-50">
 
         <ul class="nav flex-column mb-auto">
-          <?php foreach ($menus as $index => $menu): ?>
+          <?php foreach ($menus as $index =>$menu): ?>
             <li class="nav-item">
               <a href="#" id="btn-tab-<?= $menu['id']; ?>" onclick="pindahTab('<?= $menu['id']; ?>')" class="nav-link-custom <?= $index === 0 ? 'active-menu' : ''; ?>">
                 <i class="bi <?= $menu['icon']; ?> fs-5"></i>
@@ -200,263 +204,53 @@ if ($role === 'Guru') {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
-      <main class="col-md-9 col-lg-10 p-4">
+      <!-- KONTEN UTAMA (Dengan kelas sticky ms-md-auto sesuai permintaan) -->
+      <main class="col-md-9 col-lg-10 p-4 ms-md-auto">
 
         <!-- HEADER KONTEN -->
-        <div class="main-header-card mb-4 d-flex justify-content-between align-items-center">
-          <div>
-            <h3 class="mb-1 fw-bold text-dark">Selamat Datang, <?= htmlspecialchars($nama); ?> 👋</h3>
-            <p class="text-muted mb-0 small"><i class="bi bi-envelope me-1"></i><?= htmlspecialchars($email); ?> | Logged in as <strong><?= $role; ?></strong></p>
-          </div>
-          <div class="text-end d-none d-md-block">
-            <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>Tahun Ajaran Aktif</span>
-            <h6 class="fw-bold mb-0 text-danger">2025 / 2026</h6>
-          </div>
-        </div>
+      
 
-        <!-- TAB 1: DASHBOARD -->
+       <!-- TAB 1: DASHBOARD -->
         <div id="tab-dashboard" class="tab-content">
-          <div class="row g-4">
-            <div class="col-md-4">
-              <div class="card stat-card shadow-sm bg-white border-start border-4 border-danger p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <span class="text-muted fw-medium text-uppercase small">Total Siswa</span>
-                    <h2 class="fw-bold mb-0 mt-1 text-dark"><?= $total_siswa; ?></h2>
-                  </div>
-                  <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger">
-                    <i class="bi bi-people fs-2"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="card stat-card shadow-sm bg-white border-start border-4 border-warning p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <span class="text-muted fw-medium text-uppercase small">Total Guru</span>
-                    <h2 class="fw-bold mb-0 mt-1 text-dark"><?= $total_guru; ?></h2>
-                  </div>
-                  <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning">
-                    <i class="bi bi-person-workspace fs-2"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <div class="card stat-card shadow-sm bg-white border-start border-4 border-success p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <span class="text-muted fw-medium text-uppercase small">Total Kelas</span>
-                    <h2 class="fw-bold mb-0 mt-1 text-dark"><?= $total_kelas; ?></h2>
-                  </div>
-                  <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
-                    <i class="bi bi-building fs-2"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <?php include 'tab_dashboard.php'; ?>
         </div>
 
         <!-- TAB 2: DATA GURU / CATAT PELANGGARAN -->
         <div id="tab-menu2" class="tab-content" style="display: none;">
-          <div class="custom-table-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-workspace me-2 text-danger"></i><?= $role === 'Guru' ? 'Catat Pelanggaran Siswa' : 'Kelola Data Guru (Tabel t_guru)'; ?></h5>
-              <?php if ($role !== 'Guru'): ?>
-                <a href="guru_tambah.php" class="btn btn-maroon btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Tambah Guru</a>
-              <?php endif; ?>
-            </div>
-
-            <div class="table-responsive rounded-3 overflow-hidden">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <?php if ($role === 'Guru'): ?>
-                      <th>No</th><th>Nama Siswa</th><th>Pelanggaran</th><th>Poin</th>
-                    <?php else: ?>
-                      <th>ID</th><th>NIP</th><th>Nama Guru</th><th>Email</th><th>Status</th><th class="text-center">Aksi</th>
-                    <?php endif; ?>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php if ($role === 'Guru'): ?>
-                    <?php
-                    $no = 1;
-                    $q_pelanggaran = mysqli_query($koneksi, "
-                      SELECT s.nama, p.nama as nama_pelanggaran, p.poin 
-                      FROM t_pelanggaran_siswa ps
-                      JOIN t_siswa s ON ps.siswa_id = s.id
-                      JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id
-                    ");
-                    if ($q_pelanggaran && mysqli_num_rows($q_pelanggaran) > 0) {
-                        while ($p = mysqli_fetch_assoc($q_pelanggaran)) {
-                            echo "<tr>
-                                    <td>{$no}</td>
-                                    <td class='fw-semibold'>{$p['nama']}</td>
-                                    <td>{$p['nama_pelanggaran']}</td>
-                                    <td><span class='badge bg-danger'>{$p['poin']} Poin</span></td>
-                                  </tr>";
-                            $no++;
-                        }
-                    } else {
-                        echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Belum ada data pelanggaran</td></tr>";
-                    }
-                    ?>
-                  <?php else: ?>
-                    <?php
-                    $q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru ORDER BY id DESC");
-                    if ($q_guru && mysqli_num_rows($q_guru) > 0) {
-                        while ($g = mysqli_fetch_assoc($q_guru)) {
-                            $status_badge = ($g['status_aktif'] == 1) ? '<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Aktif</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1">Tidak Aktif</span>';
-                            echo "<tr>
-                                    <td class='text-muted'>#{$g['id']}</td>
-                                    <td>{$g['nip']}</td>
-                                    <td class='fw-semibold'>{$g['nama']}</td>
-                                    <td>{$g['email']}</td>
-                                    <td>{$status_badge}</td>
-                                   <td class='text-center'>
-                                      <a href='guru_edit.php?id={$g['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1'>Edit</a>
-                                      <a href='guru_hapus.php?id={$g['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Yakin ingin menghapus data ini?\")'>Hapus</a>
-                                    </td>
-                                  </tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='6' class='text-center py-4 text-muted'>Belum ada data guru di database</td></tr>";
-                    }
-                    ?>
-                  <?php endif; ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <?php include 'tab_guru.php'; ?>
         </div>
 
         <!-- TAB 3: DATA KELAS -->
         <div id="tab-menu3" class="tab-content" style="display: none;">
-          <div class="custom-table-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-building me-2 text-danger"></i>Data Kelas (t_kelas)</h5>
-              <?php if ($role !== 'Guru'): ?>
-                <a href="kelas_tambah.php" class="btn btn-maroon btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Tambah Kelas</a>
-              <?php endif; ?>
-            </div>
-
-            <div class="table-responsive rounded-3 overflow-hidden">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th width="10%">ID</th>
-                    <th>Nama Kelas</th>
-                    <th width="15%">Tingkat</th>
-                    <th width="20%">Jurusan</th>
-                    <th width="15%" class="text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php
-                  $q_kls = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY id DESC");
-                  if ($q_kls && mysqli_num_rows($q_kls) > 0) {
-                      while ($k = mysqli_fetch_assoc($q_kls)) {$nama_kelas = $k['nama'] ?? $k['nama_kelas'] ?? '-';
-                       echo "<tr>
-            <td class='text-muted'>#{$k['id']}</td>
-            <td class='fw-semibold'>{$nama_kelas}</td>
-            <td><span class='badge bg-light text-dark border'>Tingkat {$k['tingkat']}</span></td>
-            <td>{$k['jurusan']}</td>
-            <td class='text-center'>
-              <a href='kelas_edit.php?id={$k['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1'><i class='bi bi-pencil-square'></i> Edit</a>
-              <a href='kelas_hapus.php?id={$k['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus kelas ini?\")'><i class='bi bi-trash'></i> Hapus</a>
-            </td>
-          </tr>";
-    }
-} else {
-                      echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada data kelas</td></tr>";
-                  }
-                  ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <?php include 'tab_kelas.php'; ?>
         </div>
 
         <!-- TAB 4: DATA SISWA -->
         <div id="tab-menu4" class="tab-content" style="display: none;">
-          <div class="custom-table-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people me-2 text-danger"></i>Data Siswa (t_siswa)</h5>
-              <?php if ($role !== 'Guru'): ?>
-                <a href="siswa_tambah.php" class="btn btn-maroon btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Tambah Siswa</a>
-              <?php endif; ?>
-            </div>
-
-            <div class="table-responsive rounded-3 overflow-hidden">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th width="8%">ID</th>
-                    <th width="20%">NISN</th>
-                    <th>Nama Siswa</th>
-                    <th width="15%" class="text-center">L/P</th>
-                    <th width="15%" class="text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-           <?php
-                  $q_kls = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY id DESC");
-                  if ($q_kls && mysqli_num_rows($q_kls) > 0) {
-                      while ($k = mysqli_fetch_assoc($q_kls)) {
-                          $nama_kelas = $k['nama'] ?? $k['nama_kelas'] ?? '-';
-                          echo "<tr>
-                                  <td class='text-muted'>#{$k['id']}</td>
-                                  <td class='fw-semibold'>{$nama_kelas}</td>
-                                  <td><span class='badge bg-light text-dark border'>Tingkat {$k['tingkat']}</span></td>
-                                  <td>{$k['jurusan']}</td>
-                                  <td class='text-center'>
-                                    <a href='kelas_edit.php?id={$k['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1'>Edit</a>
-                                    <a href='kelas_hapus.php?id={$k['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus kelas ini?\")'>Hapus</a>
-                                  </td>
-                                </tr>";
-                      }
-                  } else {
-                      echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada data kelas</td></tr>";
-                  }
-                  ?>
-                  ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <?php include 'tab_siswa.php'; ?>
         </div>
 
         <!-- TAB 5: DATA TAHUN AJARAN -->
         <div id="tab-menu5" class="tab-content" style="display: none;">
-          <div class="custom-table-card p-4">
-            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-calendar-range me-2 text-danger"></i>Data Tahun Ajaran (t_tahun_ajaran)</h5>
-            <div class="table-responsive rounded-3 overflow-hidden">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr><th>ID</th><th>Nama Tahun Ajaran</th><th>Tanggal Mulai</th><th>Tanggal Selesai</th></tr>
-                </thead>
-                <tbody>
-                  <?php
-                  $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran LIMIT 10");
-                  if ($q_ta && mysqli_num_rows($q_ta) > 0) {
-                      while ($ta = mysqli_fetch_assoc($q_ta)) {
-                          echo "<tr><td class='text-muted'>#{$ta['id']}</td><td class='fw-semibold'>{$ta['nama']}</td><td>{$ta['tanggal_mulai']}</td><td>{$ta['tanggal_selesai']}</td></tr>";
-                      }
-                  } else {
-                      echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Belum ada data tahun ajaran</td></tr>";
-                  }
-                  ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <?php include 'tab_tahun_ajaran.php'; ?>
         </div>
+
+        <!-- TAB 6: PENEMPATAN SISWA -->
+        <div id="tab-menu6" class="tab-content" style="display: none;">
+          <?php include 'tab_penempatan.php'; ?>
+        </div>
+
+        <!-- TAB 7: KATEGORI PELANGGARAN -->
+        <div id="tab-menu7" class="tab-content" style="display: none;">
+          <?php include 'tab_kategori.php'; ?>
+        </div>
+
+        <!-- TAB 8: DATA WALI KELAS -->
+        <div id="tab-menu8" class="tab-content" style="display: none;">
+          <?php include 'tab_wali_kelas.php'; ?>
+        </div>
+
+      
 
         <!-- TAB 6: PENEMPATAN SISWA -->
         <div id="tab-menu6" class="tab-content" style="display: none;">
@@ -468,24 +262,15 @@ if ($role === 'Guru') {
                   <tr><th>ID</th><th>Siswa ID</th><th>Tahun Ajaran ID</th><th>Kelas ID</th><th>Status</th></tr>
                 </thead>
                 <tbody>
-              <?php
-                  $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY id DESC");
-                  if ($q_sis && mysqli_num_rows($q_sis) > 0) {
-                      while ($s = mysqli_fetch_assoc($q_sis)) {
-                          $jk_badge = ($s['jenis_kelamin'] == 'L') ? '<span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1">Laki-Laki</span>' : '<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1">Perempuan</span>';
-                          echo "<tr>
-                                  <td class='text-muted'>#{$s['id']}</td>
-                                  <td>{$s['nisn']}</td>
-                                  <td class='fw-semibold'>{$s['nama']}</td>
-                                  <td class='text-center'>{$jk_badge}</td>
-                                  <td class='text-center'>
-                                    <a href='siswa_edit.php?id={$s['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1'>Edit</a>
-                                    <a href='siswa_hapus.php?id={$s['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus siswa ini?\")'>Hapus</a>
-                                  </td>
-                                </tr>";
+                  <?php
+                  $q_ps = mysqli_query($koneksi, "SELECT * FROM t_kelas_siswa");
+                  if ($q_ps && mysqli_num_rows($q_ps) > 0) {
+                      while ($ps = mysqli_fetch_assoc($q_ps)) {
+                          $st = ($ps['status_aktif'] == 1) ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Non-Aktif</span>';
+                          echo "<tr><td class='text-muted'>#{$ps['id']}</td><td>{$ps['siswa_id']}</td><td>{$ps['tahun_ajaran_id']}</td><td>{$ps['kelas_id']}</td><td>{$st}</td></tr>";
                       }
                   } else {
-                      echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada data siswa</td></tr>";
+                      echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada data penempatan siswa</td></tr>";
                   }
                   ?>
                 </tbody>
@@ -587,7 +372,7 @@ if ($role === 'Guru') {
     </div>
   </div>
 
-  <script>
+ <script>
     function pindahTab(tabId) {
       // Sembunyikan semua tab
       const allTabs = document.querySelectorAll('.tab-content');
@@ -613,7 +398,13 @@ if ($role === 'Guru') {
         activeBtn.classList.add('active-menu');
       }
     }
-  </script>
 
+    // Otomatis buka tab sesuai URL parameter (misal ?tab=menu6) setelah halaman dimuat
+    document.addEventListener("DOMContentLoaded", function() {
+      <?php if (isset($_GET['tab'])): ?>
+        pindahTab('<?= htmlspecialchars($_GET['tab']); ?>');
+      <?php endif; ?>
+    });
+  </script>
 </body>
 </html>
