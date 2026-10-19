@@ -2,17 +2,17 @@
 // Ambil kata kunci pencarian jika ada
 $cari = isset($_GET['cari_kategori']) ? mysqli_real_escape_string($koneksi, $_GET['cari_kategori']) : '';
 
-// Query dengan filter pencarian berdasarkan nama, deskripsi, atau jenis
+// Query dengan filter pencarian yang aman (berdasarkan nama dan deskripsi)
 if (!empty($cari)) {
-    $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama LIKE '%$cari%' OR deskripsi LIKE '%$cari%' OR jenis LIKE '%$cari%' ORDER BY id DESC");
+    $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama LIKE '%$cari%' OR deskripsi LIKE '%$cari%' ORDER BY id DESC");
 } else {
     $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori ORDER BY id DESC");
 }
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="fw-bold text-dark mb-0"><i class="bi bi-tags text-danger me-2"></i>Kategori Pelanggaran</h4>
-  <a href="kategori_tambah.php" class="btn btn-danger btn-sm px-3 rounded-pill fw-semibold" style="background-color: #8b0000; border-color: #8b0000;">
+  <h4 class="fw-bold text-dark mb-0"><i class="bi bi-tags text-warning me-2"></i>Kategori Pelanggaran</h4>
+  <a href="kategori_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
     <i class="bi bi-plus-lg me-1"></i>Tambah Kategori
   </a>
 </div>
@@ -26,13 +26,13 @@ if (!empty($cari)) {
       <div class="col-md-10">
         <div class="input-group">
           <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-          <input type="text" name="cari_kategori" class="form-control border-start-0 ps-0" placeholder="Cari nama kategori, deskripsi, atau jenis pelanggaran..." value="<?= htmlspecialchars($cari); ?>">
+          <input type="text" name="cari_kategori" class="form-control border-start-0 ps-0" placeholder="Cari nama kategori atau deskripsi..." value="<?= htmlspecialchars($cari); ?>">
         </div>
       </div>
       <div class="col-md-2 d-flex gap-2">
-        <button type="submit" class="btn btn-maroon w-100 fw-semibold text-white" style="background-color: #8b0000;">Cari</button>
+        <button type="submit" class="btn w-100 fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">Cari</button>
         <?php if (!empty($cari)): ?>
-          <a href="dashboard.php?tab=menu7" class="btn btn-outline-secondary" title="Reset Pencarian"><i class="bi bi-arrow-counterclockwise"></i></a>
+          <a href="dashboard.php?tab=menu7" class="btn btn-outline-warning text-dark" title="Reset Pencarian"><i class="bi bi-arrow-counterclockwise"></i></a>
         <?php endif; ?>
       </div>
     </form>
@@ -43,22 +43,22 @@ if (!empty($cari)) {
 <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead style="background-color: #8b0000; color: white;">
+      <thead style="background-color: #1b263b; color: white;">
         <tr>
-          <th class="py-3 px-3" style="width: 5%;">No</th>
-          <th class="py-3">Nama Kategori Pelanggaran</th>
-          <th class="py-3">Deskripsi</th>
-          <th class="py-3 text-center" style="width: 15%;">Jenis</th>
-          <th class="py-3 text-center" style="width: 12%;">Status</th>
-          <th class="py-3 text-center" style="width: 15%;">Aksi</th>
+          <th class="py-3 px-3" style="width: 5%;">NO</th>
+          <th class="py-3">NAMA KATEGORI PELANGGARAN</th>
+          <th class="py-3">DESKRIPSI</th>
+          <th class="py-3 text-center" style="width: 15%;">JENIS</th>
+          <th class="py-3 text-center" style="width: 12%;">STATUS</th>
+          <th class="py-3 text-center" style="width: 15%;">AKSI</th>
         </tr>
       </thead>
       <tbody>
         <?php 
-        if (mysqli_num_rows($query_kat) > 0) {
-            $no = 1; // Nomor urut otomatis berurutan dari 1 ke bawah
+        if ($query_kat && mysqli_num_rows($query_kat) > 0) {
+            $no = 1; // Nomor urut berurutan 1, 2, 3...
             while ($row = mysqli_fetch_assoc($query_kat)) {
-                // Tentukan warna badge berdasarkan jenis pelanggaran
+                // Tentukan warna badge dengan aksen kuning/biru
                 $jenis = $row['jenis'] ?? 'Sedang';
                 $badge_bg = 'bg-warning text-dark';
                 if (stripos($jenis, 'Ringan') !== false) {

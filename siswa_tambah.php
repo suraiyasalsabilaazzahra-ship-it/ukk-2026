@@ -60,11 +60,65 @@ if (isset($_POST['simpan'])) {
   <div class="container" style="max-width: 850px;">
     <form action="" method="POST">
       <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
-        <div class="card-header text-white p-3" style="background-color: #8b0000;">
+        <div class="card-header text-white p-3" style="background-color: #1b263b;">
           <h5 class="mb-0 fw-bold">Tambah Data Siswa Baru</h5>
         </div>
         <div class="card-body p-4 bg-white">
           <div class="row g-3 mb-3">
             <div class="col-md-6">
               <label class="form-label fw-bold">NISN</label>
-              <input type="text" name="nisn" class="form-control" placeholder="Masukkan NISN
+              <input type="text" name="nisn" class="form-control" placeholder="Masukkan NISN">
+              <input type="text" name="nisn" class="form-control" placeholder="Masukkan NISN" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">NIS</label>
+              <input type="text" name="nis" class="form-control" placeholder="Masukkan NIS" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nama Lengkap</label>
+            <input type="text" name="nama" class="form-control" placeholder="Masukkan nama lengkap siswa" required>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Jenis Kelamin</label>
+              <select name="gender" class="form-select" required>
+                <option value="" disabled selected>Pilih Jenis Kelamin</option>
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Status Aktif</label>
+              <select name="status_aktif" class="form-select" required>
+                <option value="1" selected>Aktif</option>
+                <option value="0">Tidak Aktif</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">No. Telepon</label>
+              <input type="text" name="no_telp" class="form-control" placeholder="Contoh: 08123456789">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Alamat</label>
+              <textarea name="alamat" class="form-control" rows="1" placeholder="Masukkan alamat siswa"></textarea>
+            </div>
+          </div>
+
+          <div class="pt-3 border-top d-flex gap-2 justify-content-end">
+            <a href="dashboard.php?tab=menu4" class="btn btn-secondary px-4 fw-bold">Batal</a>
+            <button type="submit" name="simpan" class="btn px-4 fw-bold text-white" style="background-color: #1b263b; border-color: #1b263b;">
+              Simpan Data Siswa
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

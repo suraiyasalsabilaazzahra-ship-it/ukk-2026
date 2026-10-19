@@ -33,12 +33,12 @@ if (isset($_POST['update'])) {
     $alamat       = mysqli_real_escape_string($koneksi, $_POST['alamat']);
     $status_aktif = $_POST['status_aktif'];
 
-    // Query UPDATE bersih tanpa user_id
+    // Query UPDATE database
     $query = "UPDATE t_siswa SET 
                 nisn = '$nisn', 
                 nis = '$nis', 
                 nama = '$nama', 
-                jenis_kelamin = '$gender', 
+                gender = '$gender', 
                 alamat = '$alamat', 
                 status_aktif = '$status_aktif' 
               WHERE id = '$id'";
@@ -68,7 +68,7 @@ if (isset($_POST['update'])) {
     <div class="container" style="max-width: 850px;">
         <form action="" method="POST">
             <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
-                <div class="card-header text-white p-3" style="background-color: #8b0000;">
+                <div class="card-header text-white p-3" style="background-color: #1b263b;">
                     <h5 class="mb-0 fw-bold">Edit Data Siswa</h5>
                 </div>
                 <div class="card-body p-4 bg-white">
@@ -112,7 +112,7 @@ if (isset($_POST['update'])) {
 
                     <div class="pt-3 border-top d-flex gap-2 justify-content-end">
                         <a href="dashboard.php?tab=menu4" class="btn btn-secondary px-4 fw-bold">Batal</a>
-                        <button type="submit" name="update" class="btn btn-danger px-4 fw-bold" style="background-color: #8b0000; border-color: #8b0000;">
+                        <button type="submit" name="update" class="btn px-4 fw-bold text-white" style="background-color: #1b263b; border-color: #1b263b;">
                             Perbarui Data Siswa
                         </button>
                     </div>

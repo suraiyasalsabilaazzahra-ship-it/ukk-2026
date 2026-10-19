@@ -3,7 +3,7 @@
 ?>
 <div class="custom-table-card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-bounding-box me-2 text-danger"></i>Data Wali Kelas </h5>
+    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-bounding-box me-2 text-warning"></i>Data Wali Kelas </h5>
     <?php if ($role !== 'Guru'): ?>
       <a href="wali_kelas_tambah.php" class="btn btn-maroon btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Tambah Wali Kelas</a>
     <?php endif; ?>

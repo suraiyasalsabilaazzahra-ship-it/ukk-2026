@@ -38,12 +38,12 @@ if (isset($_POST['simpan'])) {
     if (mysqli_query($koneksi, $query)) {
         echo "<script>
                 alert('Berhasil! Data guru baru telah ditambahkan.'); 
-                window.location.href='dashboard.php';
+                window.location.href='dashboard.php?tab=menu2';
               </script>";
         exit();
     } else {
         echo "<script>
-                alert('Gagal menambah data guru: " . mysqli_error($koneksi) . "');
+                alert('Gagal menambah data guru: " . mysqli_real_escape_string($koneksi, mysqli_error($koneksi)) . "');
               </script>";
     }
 }
@@ -64,7 +64,7 @@ if (isset($_POST['simpan'])) {
       <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
         
         <!-- HEADER KARTU -->
-        <div class="card-header text-white p-3" style="background-color: #8b0000;">
+        <div class="card-header text-white p-3" style="background-color: #1b263b;">
           <h5 class="mb-0 fw-bold">Tambah Data Guru Baru</h5>
         </div>
 
@@ -114,8 +114,8 @@ if (isset($_POST['simpan'])) {
 
           <!-- TOMBOL AKSI UTAMA -->
           <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-            <a href="dashboard.php" class="btn btn-secondary px-4 fw-bold">Batal</a>
-            <button type="submit" name="simpan" class="btn btn-danger px-4 fw-bold" style="background-color: #8b0000; border-color: #8b0000;">
+            <a href="dashboard.php?tab=menu2" class="btn btn-secondary px-4 fw-bold">Batal</a>
+            <button type="submit" name="simpan" class="btn text-white px-4 fw-bold" style="background-color: #1b263b; border-color: #1b263b;">
               Simpan Data Guru
             </button>
           </div>

@@ -50,7 +50,7 @@ if (isset($_POST['simpan'])) {
     <form action="" method="POST">
       <div class="card shadow border-0 rounded-3 overflow-hidden">
         
-        <div class="card-header text-white p-3" style="background-color: #8b0000;">
+        <div class="card-header text-white p-3" style="background-color: #1b263b;">
           <h5 class="mb-0 fw-bold">Tambah Data Kelas Baru</h5>
         </div>
 
@@ -77,7 +77,7 @@ if (isset($_POST['simpan'])) {
 
           <div class="pt-3 border-top d-flex gap-2 justify-content-end">
             <a href="dashboard.php" class="btn btn-secondary px-4 fw-bold">Batal</a>
-            <button type="submit" name="simpan" class="btn btn-danger px-4 fw-bold" style="background-color: #8b0000; border-color: #8b0000;">
+            <button type="submit" name="simpan" class="btn btn-danger px-4 fw-bold" style="background-color: #1b263b; border-color:">
               Simpan Kelas
             </button>
           </div>

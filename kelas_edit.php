@@ -59,7 +59,7 @@ if (isset($_POST['update'])) {
     <form action="" method="POST">
       <div class="card shadow border-0 rounded-3 overflow-hidden">
         
-        <div class="card-header text-white p-3" style="background-color: #8b0000;">
+        <div class="card-header text-white p-3" style="background-color: #1b263b;">
           <h5 class="mb-0 fw-bold">Edit Data Kelas</h5>
         </div>
 

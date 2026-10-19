@@ -18,18 +18,18 @@ if (isset($_GET['id'])) {
     if (mysqli_query($koneksi, $query)) {
         echo "<script>
                 alert('Data guru berhasil dihapus!');
-                window.location.href = 'dashboard.php';
+                window.location.href = 'dashboard.php?tab=menu2';
               </script>";
         exit();
     } else {
         echo "<script>
-                alert('Gagal menghapus data: " . mysqli_error($koneksi) . "');
-                window.location.href = 'dashboard.php';
+                alert('Gagal menghapus data: " . mysqli_real_escape_string($koneksi, mysqli_error($koneksi)) . "');
+                window.location.href = 'dashboard.php?tab=menu2';
               </script>";
         exit();
     }
 } else {
-    header("Location: dashboard.php");
+    header("Location: dashboard.php?tab=menu2");
     exit();
 }
 ?>

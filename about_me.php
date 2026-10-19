@@ -4,7 +4,7 @@
     <!-- TAB ABOUT ME -->
         <div id="tab-<?= $role === 'Guru' ? 'menu5' : 'menu9'; ?>" class="tab-content" style="display: none;">
           <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-            <div class="p-4 bg-maroon text-white" style="background: linear-gradient(135deg, #8b0000 0%, #5a0000 100%);">
+            <div class="p-4 bg-maroon text-white" style="background: linear-gradient(135deg, #02008b 0%, #070157 100%);">
               <h4 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2"></i>Profil Pengembang / User</h4>
               <p class="mb-0 text-white-50 small">Sistem Informasi UKK 2026</p>
             </div>
