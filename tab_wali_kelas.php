@@ -5,7 +5,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-bounding-box me-2 text-warning"></i>Data Wali Kelas </h5>
     <?php if ($role !== 'Guru'): ?>
-      <a href="wali_kelas_tambah.php" class="btn btn-maroon btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Tambah Wali Kelas</a>
+      <a href="wali_kelas/wali_kelas_tambah.php" class="btn btn-maroon btn-sm px-3 rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Tambah Wali Kelas</a>
     <?php endif; ?>
   </div>
   <div class="table-responsive rounded-3 overflow-hidden">
@@ -26,8 +26,8 @@
                         <td>{$wk['tahun_ajaran_id']}</td>
                         <td>{$st}</td>
                         <td class='text-center'>
-                          <a href='wali_kelas_edit.php?id={$wk['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1'>Edit</a>
-                          <a href='wali_kelas_hapus.php?id={$wk['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus wali kelas ini?\")'>Hapus</a>
+                          <a href='wali_kelas/wali_kelas_edit.php?id={$wk['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1'>Edit</a>
+                          <a href='wali_kelas/wali_kelas_hapus.php?id={$wk['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus wali kelas ini?\")'>Hapus</a>
                         </td>
                       </tr>";
             }

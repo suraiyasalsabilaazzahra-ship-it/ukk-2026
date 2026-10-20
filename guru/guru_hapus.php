@@ -1,10 +1,10 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: login.php");
+    header("Location:../login.php");
     exit();
 }
 
@@ -18,7 +18,7 @@ if (isset($_GET['id'])) {
     if (mysqli_query($koneksi, $query)) {
         echo "<script>
                 alert('Data guru berhasil dihapus!');
-                window.location.href = 'dashboard.php?tab=menu2';
+                window.location.href = ../'dashboard.php?tab=menu2';
               </script>";
         exit();
     } else {

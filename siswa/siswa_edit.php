@@ -1,17 +1,17 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit();
 }
 
 // Ambil ID dari URL
 $id = $_GET['id'] ?? '';
 if (empty($id)) {
-    header("Location: dashboard.php?tab=menu4");
+    header("Location: ../dashboard.php?tab=menu4");
     exit();
 }
 
@@ -20,7 +20,7 @@ $q_siswa = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$id'");
 $siswa = mysqli_fetch_assoc($q_siswa);
 
 if (!$siswa) {
-    echo "<script>alert('Data siswa tidak ditemukan!'); window.location.href='dashboard.php?tab=menu4';</script>";
+    echo "<script>alert('Data siswa tidak ditemukan!'); window.location.href='../dashboard.php?tab=menu4';</script>";
     exit();
 }
 
@@ -111,7 +111,7 @@ if (isset($_POST['update'])) {
                     </div>
 
                     <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-                        <a href="dashboard.php?tab=menu4" class="btn btn-secondary px-4 fw-bold">Batal</a>
+                       <a href="../dashboard.php?tab=menu4" class="btn btn-secondary">Batal</a>
                         <button type="submit" name="update" class="btn px-4 fw-bold text-white" style="background-color: #1b263b; border-color: #1b263b;">
                             Perbarui Data Siswa
                         </button>

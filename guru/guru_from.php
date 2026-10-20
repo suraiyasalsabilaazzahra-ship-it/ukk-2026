@@ -1,6 +1,6 @@
 <?php
 // Hubungkan ke database
-include 'koneksi.php';
+include '../koneksi.php';
 ?>
 
 <!DOCTYPE html>

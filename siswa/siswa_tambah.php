@@ -1,10 +1,10 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 
 // Proteksi login
-if (!isset($_SESSION['login']) \vert{}\vert{}$_SESSION['login'] !== true) {
-    header("Location: login.php");
+if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+    header("Location:../login.php");
     exit();
 }
 
@@ -38,7 +38,7 @@ if (isset($_POST['simpan'])) {
     if (mysqli_query($koneksi,$query)) {
         echo "<script>
                 alert('Berhasil! Data siswa baru telah ditambahkan.'); 
-                window.location.href='dashboard.php?tab=menu4';
+                window.location.href='../dashboard.php?tab=menu4';
               </script>";
         exit();
     } else {
@@ -68,7 +68,6 @@ if (isset($_POST['simpan'])) {
             <div class="col-md-6">
               <label class="form-label fw-bold">NISN</label>
               <input type="text" name="nisn" class="form-control" placeholder="Masukkan NISN">
-              <input type="text" name="nisn" class="form-control" placeholder="Masukkan NISN" required>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-bold">NIS</label>
@@ -99,19 +98,15 @@ if (isset($_POST['simpan'])) {
             </div>
           </div>
 
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold">No. Telepon</label>
-              <input type="text" name="no_telp" class="form-control" placeholder="Contoh: 08123456789">
-            </div>
-            <div class="col-md-6">
+        
+            <div class="col-md-12">
               <label class="form-label fw-bold">Alamat</label>
               <textarea name="alamat" class="form-control" rows="1" placeholder="Masukkan alamat siswa"></textarea>
             </div>
           </div>
 
           <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-            <a href="dashboard.php?tab=menu4" class="btn btn-secondary px-4 fw-bold">Batal</a>
+            <a href="../dashboard.php?tab=menu4" class="btn btn-secondary">Batal</a>
             <button type="submit" name="simpan" class="btn px-4 fw-bold text-white" style="background-color: #1b263b; border-color: #1b263b;">
               Simpan Data Siswa
             </button>

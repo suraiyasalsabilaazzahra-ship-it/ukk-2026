@@ -1,10 +1,10 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: login.php");
+    header("Location:../login.php");
     exit();
 }
 
@@ -12,7 +12,7 @@ $id = $_GET['id'] ?? '';
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT * FROM t_guru WHERE id='$id'"));
 
 if (!$data) {
-    header("Location: dashboard.php?tab=menu2");
+    header("Location:../dashboard.php?tab=menu2");
     exit();
 }
 
@@ -26,7 +26,7 @@ if (isset($_POST['update'])) {
     $query = "UPDATE t_guru SET nip='$nip', nama='$nama', email='$email', status_aktif='$status_aktif', user_id='$user_id', updated_at=NOW() WHERE id='$id'";
 
     if (mysqli_query($koneksi, $query)) {
-        echo "<script>alert('Data guru berhasil diperbarui!'); window.location.href='dashboard.php?tab=menu2';</script>";
+        echo "<script>alert('Data guru berhasil diperbarui!'); window.location.href = '../dashboard.php?tab=menu2';</script>";
     } else {
         echo "<script>alert('Gagal memperbarui data: " . mysqli_real_escape_string($koneksi, mysqli_error($koneksi)) . "');</script>";
     }
@@ -79,7 +79,7 @@ if (isset($_POST['update'])) {
             </select>
           </div>
           <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-            <a href="dashboard.php?tab=menu2" class="btn btn-secondary px-4 fw-bold">Batal</a>
+           <a href="../dashboard.php?tab=menu2" class="btn btn-secondary">Batal</a>
             <button type="submit" name="update" class="btn text-white px-4 fw-bold" style="background-color: #1b263b; border-color: #1b263b;">Simpan Perubahan</button>
           </div>
         </form>

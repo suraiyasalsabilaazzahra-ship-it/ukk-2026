@@ -25,7 +25,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
       <i class="bi bi-people me-2 text-warning"></i>Data Siswa
     </h5>
     <?php if ($role !== 'Guru'): ?>
-      <a href="siswa_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
+      <a href="siswa/siswa_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
         <i class="bi bi-plus-lg me-1"></i>Tambah Siswa
       </a>
     <?php endif; ?>
@@ -84,8 +84,8 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
                         <td class='fw-semibold'>{$s['nama']}</td>
                         <td class='text-center'>{$jk_badge}</td>
                         <td class='text-center'>
-                          <a href='siswa_edit.php?id={$s['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>
-                          <a href='siswa_hapus.php?id={$s['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus siswa ini?\")'><i class='bi bi-trash'></i></a>
+                          <a href='siswa/siswa_edit.php?id={$s['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>
+                          <a href='siswa/siswa_hapus.php?id={$s['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus siswa ini?\")'><i class='bi bi-trash'></i></a>
                         </td>
                       </tr>";
                 $no++;

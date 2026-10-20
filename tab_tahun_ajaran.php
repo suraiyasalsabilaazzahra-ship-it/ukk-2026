@@ -25,7 +25,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
       <i class="bi bi-calendar-range me-2 text-warning"></i>Data Tahun Ajaran
     </h5>
     <?php if ($role !== 'Guru'): ?>
-      <a href="tahun_ajaran_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
+      <a href="tahun_ajaran/tahun_ajaran_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
         <i class="bi bi-plus-lg me-1"></i>Tambah Tahun Ajaran
       </a>
     <?php endif; ?>
@@ -81,8 +81,8 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
                         <td>{$ta['tanggal_mulai']}</td>
                         <td>{$ta['tanggal_selesai']}</td>
                         <td class='text-center'>
-                          <a href='tahun_ajaran_edit.php?id={$ta['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>
-                          <a href='tahun_ajaran_hapus.php?id={$ta['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus tahun ajaran ini?\")'><i class='bi bi-trash'></i></a>
+                          <a href='tahun_ajaran/tahun_ajaran_edit.php?id={$ta['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>
+                          <a href='tahun_ajaran/tahun_ajaran_hapus.php?id={$ta['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus tahun ajaran ini?\")'><i class='bi bi-trash'></i></a>
                         </td>
                       </tr>";
                 $no++;

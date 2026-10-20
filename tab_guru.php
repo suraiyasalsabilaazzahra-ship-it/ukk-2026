@@ -30,7 +30,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
       <?= $role === 'Guru' ? 'Catat Pelanggaran Siswa' : 'Kelola Data Guru '; ?>
     </h5>
     <?php if ($role !== 'Guru'): ?>
-      <a href="guru_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
+     <a href="guru/guru_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
         <i class="bi bi-plus-lg me-1"></i>Tambah Guru
       </a>
     <?php endif; ?>
@@ -107,23 +107,25 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
           if ($q_guru && mysqli_num_rows($q_guru) > 0) {
               while ($g = mysqli_fetch_assoc($q_guru)) {
                   $status_badge = ($g['status_aktif'] == 1) ? '<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Aktif</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1">Tidak Aktif</span>';
-                  echo "<tr>
-                          <td class='text-muted'>#{$g['id']}</td>
-                          <td>{$g['nip']}</td>
-                          <td class='fw-semibold'>{$g['nama']}</td>
-                          <td>{$g['email']}</td>
-                          <td>{$status_badge}</td>
-                          <td class='text-center'>
-                            <a href='guru_edit.php?id={$g['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'>Edit</a>
-                            <a href='guru_hapus.php?id={$g['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Yakin ingin menghapus data ini?\")'>Hapus</a>
-                          </td>
-                        </tr>";
+          ?>
+                  <tr>
+                    <td class='text-muted'>#<?= $g['id']; ?></td>
+                    <td><?= $g['nip']; ?></td>
+                    <td class='fw-semibold'><?= $g['nama']; ?></td>
+                    <td><?= $g['email']; ?></td>
+                    <td><?= $status_badge; ?></td>
+                    <td class='text-center'>
+                      <a href="guru/guru_edit.php?id=<?= $g['id']; ?>" class="btn btn-warning btn-sm py-1 px-2 rounded-2 me-1">Edit</a>
+                      <a href="guru/guru_hapus.php?id=<?= $g['id']; ?>" class="btn btn-danger btn-sm py-1 px-2 rounded-2" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
+                    </td>
+                  </tr>
+          <?php
               }
           } else {
               echo "<tr><td colspan='6' class='text-center py-4 text-muted'>Belum ada data guru di database</td></tr>";
           }
           ?>
-        <?php endif; ?> <!-- <-- PENUTUP ELSE $role === 'Guru' YANG SEBELUMNYA KURANG -->
+        <?php endif; ?>
       </tbody>
     </table>
   </div>

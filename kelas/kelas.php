@@ -1,6 +1,6 @@
 <?php
 // Hubungkan ke database
-include 'koneksi.php';
+include '../koneksi.php';
 
 // Fitur Tambah Data Kelas
 if (isset($_POST['simpan_kelas'])) {
@@ -14,7 +14,7 @@ if (isset($_POST['simpan_kelas'])) {
     if ($simpan) {
         echo "<script>
                 alert('Data kelas berhasil ditambahkan!');
-                window.location.href = 'kelas.php';
+                window.location.href = '../kelas.php';
               </script>";
     } else {
         echo "<script>

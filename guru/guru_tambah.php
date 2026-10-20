@@ -1,10 +1,10 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: login.php");
+    header("Location:../login.php");
     exit();
 }
 
@@ -38,7 +38,7 @@ if (isset($_POST['simpan'])) {
     if (mysqli_query($koneksi, $query)) {
         echo "<script>
                 alert('Berhasil! Data guru baru telah ditambahkan.'); 
-                window.location.href='dashboard.php?tab=menu2';
+                window.location.href='../dashboard.php?tab=menu2';
               </script>";
         exit();
     } else {
@@ -114,7 +114,7 @@ if (isset($_POST['simpan'])) {
 
           <!-- TOMBOL AKSI UTAMA -->
           <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-            <a href="dashboard.php?tab=menu2" class="btn btn-secondary px-4 fw-bold">Batal</a>
+          <a href="../dashboard.php?tab=menu2" class="btn btn-secondary">Batal</a>
             <button type="submit" name="simpan" class="btn text-white px-4 fw-bold" style="background-color: #1b263b; border-color: #1b263b;">
               Simpan Data Guru
             </button>

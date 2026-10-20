@@ -3,8 +3,8 @@ session_start();
 include 'koneksi.php';
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: login.php");
-    exit();
+  header("Location: login.php");
+  exit();
 }
 
 // Variabel sesi
@@ -12,8 +12,9 @@ $role  = $_SESSION['role'];
 $nama  = $_SESSION['nama'];
 $email = $_SESSION['email'];
 
-// Menentukan tab aktif saat ini dari URL (default ke 'dashboard')
-$active_tab = $_GET['tab'] ?? 'dashboard';
+// Menentukan tab aktif saat ini dari URL (default tergantung role)
+$default_tab = ($role === 'Guru') ? 'dashboard' : 'menu1';
+$active_tab  = $_GET['tab'] ?? $default_tab;
 
 // Query hitung total data
 $total_siswa_q = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
@@ -27,38 +28,41 @@ $total_kelas   = ($total_kelas_q) ? mysqli_fetch_assoc($total_kelas_q)['total'] 
 
 // Konfigurasi Menu Berdasarkan Role
 if ($role === 'Guru') {
-    $menus = [
-      ['id' => 'dashboard', 'name' => '1. Beranda Guru', 'icon' => 'bi-speedometer2'],
-      ['id' => 'menu2', 'name' => '2. Catat Pelanggaran', 'icon' => 'bi-exclamation-octagon'],
-      ['id' => 'menu3', 'name' => '3. Tindakan', 'icon' => 'bi-shield-check'],
-      ['id' => 'menu4', 'name' => '4. Profil Guru', 'icon' => 'bi-person-badge'],
-      ['id' => 'menu5', 'name' => 'About Me', 'icon' => 'bi-info-circle']
-    ];
+  $menus = [
+    ['id' => 'dashboard', 'name' => '1. Beranda Guru', 'icon' => 'bi-speedometer2'],
+    ['id' => 'menu2', 'name' => '2. Catat Pelanggaran', 'icon' => 'bi-exclamation-octagon'],
+    ['id' => 'menu3', 'name' => '3. Tindakan', 'icon' => 'bi-shield-check'],
+    ['id' => 'menu4', 'name' => '4. Profil Guru', 'icon' => 'bi-person-badge'],
+    ['id' => 'menu_about', 'name' => 'About Me', 'icon' => 'bi-info-circle']
+  ];
 } else {
-    $menus = [
-      ['id' => 'dashboard', 'name' => '1. Dashboard Admin', 'icon' => 'bi-speedometer2'],
-      ['id' => 'menu2', 'name' => '2. Data Guru', 'icon' => 'bi-person-workspace'],
-      ['id' => 'menu3', 'name' => '3. Data Kelas', 'icon' => 'bi-building'],
-      ['id' => 'menu4', 'name' => '4. Data Siswa', 'icon' => 'bi-people'],
-      ['id' => 'menu5', 'name' => '5. Data Tahun Ajaran', 'icon' => 'bi-calendar-range'],
-      ['id' => 'menu6', 'name' => '6. Penempatan Siswa', 'icon' => 'bi-diagram-3'],
-      ['id' => 'menu7', 'name' => '7. Kategori Pelanggaran', 'icon' => 'bi-tags'],
-      ['id' => 'menu8', 'name' => '8. Data Wali Kelas', 'icon' => 'bi-person-bounding-box'],
-      ['id' => 'menu9', 'name' => 'About Me', 'icon' => 'bi-info-circle']
-    ];
+  $menus = [
+    ['id' => 'menu1', 'name' => 'Dashboard', 'icon' => 'bi-speedometer2'],
+    ['id' => 'menu2', 'name' => 'Data Guru', 'icon' => 'bi-person-workspace'],
+    ['id' => 'menu3', 'name' => 'Data Kelas', 'icon' => 'bi-door-closed'],
+    ['id' => 'menu4', 'name' => 'Data Siswa', 'icon' => 'bi-people'],
+    ['id' => 'menu5', 'name' => 'Tahun Ajaran', 'icon' => 'bi-calendar-event'],
+    ['id' => 'menu6', 'name' => 'Penempatan Siswa', 'icon' => 'bi-diagram-3'],
+    ['id' => 'menu7', 'name' => 'Kategori Pelanggaran', 'icon' => 'bi-tags'],
+    ['id' => 'menu8', 'name' => 'Data Wali Kelas', 'icon' => 'bi-person-bounding-box'],
+    ['id' => 'menu9', 'name' => 'Pencatatan Pelanggaran', 'icon' => 'bi-exclamation-triangle'],
+    ['id' => 'menu10', 'name' => 'Laporan Pelanggaran', 'icon' => 'bi-file-earmark-text'],
+    ['id' => 'menu_about', 'name' => 'About Me', 'icon' => 'bi-person-circle'], 
+  ];
 }
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Sistem Informasi UKK 2026</title>
-  
+
   <!-- Bootstrap 5 CSS & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  
+
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,11 +74,11 @@ if ($role === 'Guru') {
       background-color: #f4f6f9;
       color: #333;
     }
-    
+
     /* Sidebar Styling - Biru Elegan */
     .sidebar {
       background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%);
-      box-shadow: 4px 0 15px rgba(0,0,0,0.08);
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.08);
       position: fixed;
       top: 0;
       left: 0;
@@ -108,7 +112,7 @@ if ($role === 'Guru') {
       background-color: #ffc107;
       color: #0d1b2a !important;
       font-weight: 700;
-      box-shadow: 0 4px 10px rgba(255,193,7,0.3);
+      box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
     }
 
     /* Cards */
@@ -116,8 +120,8 @@ if ($role === 'Guru') {
       background: #ffffff;
       border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.05);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     /* Table Styling dengan Header Biru */
@@ -139,17 +143,21 @@ if ($role === 'Guru') {
     }
 
     /* Tombol Tema Biru Utama */
-    .btn-maroon, .btn-primary-blue {
+    .btn-maroon,
+    .btn-primary-blue {
       background-color: #1b263b;
       color: #fff;
       border: none;
     }
-    .btn-maroon:hover, .btn-primary-blue:hover {
+
+    .btn-maroon:hover,
+    .btn-primary-blue:hover {
       background-color: #0d1b2a;
       color: #fff;
     }
   </style>
 </head>
+
 <body>
 
   <div class="container-fluid">
@@ -161,13 +169,13 @@ if ($role === 'Guru') {
           <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
           <h4 class="mb-0 fw-bold fs-5">UKK System</h4>
         </div>
-        
+
         <div class="px-2 mb-3">
           <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-semibold">
             <i class="bi bi-person-check-fill me-1"></i><?= $role; ?>
           </span>
         </div>
-        
+
         <hr class="text-white-50">
 
         <ul class="nav flex-column mb-auto">
@@ -194,7 +202,7 @@ if ($role === 'Guru') {
       <main class="col-md-9 col-lg-10 p-4 ms-md-auto">
 
         <!-- TAB 1: DASHBOARD -->
-        <div id="tab-dashboard" class="tab-content" style="display: <?= ($active_tab === 'dashboard') ? 'block' : 'none'; ?>;">
+        <div id="tab-dashboard" class="tab-content" style="display: <?= ($active_tab === 'dashboard' || $active_tab === 'menu1') ? 'block' : 'none'; ?>;">
           <?php include 'tab_dashboard.php'; ?>
         </div>
 
@@ -233,8 +241,18 @@ if ($role === 'Guru') {
           <?php include 'tab_wali_kelas.php'; ?>
         </div>
 
+        <!-- TAB 9: PENCATATAN PELANGGARAN -->
+        <div id="tab-menu9" class="tab-content" style="display: <?= ($active_tab === 'menu9') ? 'block' : 'none'; ?>;">
+          <?php include 'tab_pelanggaran.php'; ?>
+        </div>
+
+        <!-- TAB 10: LAPORAN PELANGGARAN -->
+        <div id="tab-menu10" class="tab-content" style="display: <?= ($active_tab === 'menu10') ? 'block' : 'none'; ?>;">
+          <?php include 'tab_laporan.php'; ?>
+        </div>
+
         <!-- TAB ABOUT ME -->
-        <div id="tab-<?= $role === 'Guru' ? 'menu5' : 'menu9'; ?>" class="tab-content" style="display: <?= ($active_tab === 'menu9' || ($role === 'Guru' && $active_tab === 'menu5')) ? 'block' : 'none'; ?>;">
+        <div id="tab-menu_about" class="tab-content" style="display: <?= ($active_tab === 'menu_about') ? 'block' : 'none'; ?>;">
           <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div class="p-4 text-white" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
               <h4 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2 text-warning"></i>Profil Pengembang / User</h4>
@@ -251,11 +269,31 @@ if ($role === 'Guru') {
                   <h5 class="text-primary fw-bold mb-3"><i class="bi bi-info-square me-2"></i>Informasi Biodata</h5>
                   <table class="table table-borderless mb-0">
                     <tbody>
-                      <tr><th width="30%" class="text-muted">Nama Lengkap</th><td width="5%">:</td><td class="fw-semibold"><?= htmlspecialchars($nama); ?></td></tr>
-                      <tr><th class="text-muted">Email</th><td>:</td><td><?= htmlspecialchars($email); ?></td></tr>
-                      <tr><th class="text-muted">Role / Jabatan</th><td>:</td><td><?= $role; ?> Sistem</td></tr>
-                      <tr><th class="text-muted">Kelas / Jurusan</th><td>:</td><td>XII Rekayasa Perangkat Lunak (RPL)</td></tr>
-                      <tr><th class="text-muted">Proyek</th><td>:</td><td>Uji Kompetensi Keahlian (UKK) 2026</td></tr>
+                      <tr>
+                        <th width="30%" class="text-muted">Nama Lengkap</th>
+                        <td width="5%">:</td>
+                        <td class="fw-semibold"><?= htmlspecialchars($nama); ?></td>
+                      </tr>
+                      <tr>
+                        <th class="text-muted">Email</th>
+                        <td>:</td>
+                        <td><?= htmlspecialchars($email); ?></td>
+                      </tr>
+                      <tr>
+                        <th class="text-muted">Role / Jabatan</th>
+                        <td>:</td>
+                        <td><?= $role; ?> Sistem</td>
+                      </tr>
+                      <tr>
+                        <th class="text-muted">Kelas / Jurusan</th>
+                        <td>:</td>
+                        <td>XII Rekayasa Perangkat Lunak (RPL)</td>
+                      </tr>
+                      <tr>
+                        <th class="text-muted">Proyek</th>
+                        <td>:</td>
+                        <td>Uji Kompetensi Keahlian (UKK) 2026</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -274,4 +312,5 @@ if ($role === 'Guru') {
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

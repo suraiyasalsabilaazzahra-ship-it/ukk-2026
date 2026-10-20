@@ -1,9 +1,9 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: dashboard.php?tab=menu6");
+    header("Location:../ dashboard.php?tab=menu6");
     exit();
 }
 
@@ -21,7 +21,7 @@ if (isset($_POST['simpan'])) {
 
         if ($result) {
             // Redirect kembali ke dashboard dan langsung buka tab menu6 (Penempatan Siswa)
-            header("Location: dashboard.php?tab=menu6");
+            header("Location:../dashboard.php?tab=menu6");
             exit();
         } else {
             $error = "Gagal menyimpan data ke database!";
@@ -43,8 +43,8 @@ if (isset($_POST['simpan'])) {
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
     .card-form { background: #fff; border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .btn-maroon { background-color: #8b0000; color: #fff; border: none; }
-    .btn-maroon:hover { background-color: #6d0000; color: #fff; }
+    .btn-maroon { background-color: #1b263b; color: #fff; border: none; }
+    .btn-maroon:hover { background-color: #1b263b; color: #fff; }
   </style>
 </head>
 <body>
@@ -53,8 +53,8 @@ if (isset($_POST['simpan'])) {
       <div class="col-md-6">
         <div class="card card-form p-4">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-diagram-3 text-danger me-2"></i>Tambah Penempatan Siswa</h4>
-            <a href="dashboard.php?tab=menu6" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-diagram-3 text-warning me-2"></i>Tambah Penempatan Siswa</h4>
+            <a href="../dashboard.php?tab=menu6" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
           </div>
 
           <?php if (!empty($error)): ?>
