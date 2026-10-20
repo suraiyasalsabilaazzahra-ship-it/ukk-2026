@@ -3,7 +3,7 @@ session_start();
 include '../koneksi.php';
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: ../dashboard.php?tab=menu6");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -25,20 +25,28 @@ if (!$current) {
 $error = "";
 
 if (isset($_POST['update'])) {
-    $siswa_id        = $_POST['siswa_id'];
-    $tahun_ajaran_id = $_POST['tahun_ajaran_id'];
-    $kelas_id        = $_POST['kelas_id'];
-    $status_aktif    = $_POST['status_aktif'];
+    $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
+    $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id'] ?? '');
+    $kelas_id        = mysqli_real_escape_string($koneksi, $_POST['kelas_id'] ?? '');
+    $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
     if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($kelas_id)) {
-        $query = "UPDATE t_kelas_siswa SET siswa_id = '$siswa_id', tahun_ajaran_id = '$tahun_ajaran_id', kelas_id = '$kelas_id', status_aktif = '$status_aktif' WHERE id = '$id'";
+        $query = "UPDATE t_kelas_siswa SET 
+                    siswa_id = '$siswa_id', 
+                    tahun_ajaran_id = '$tahun_ajaran_id', 
+                    kelas_id = '$kelas_id', 
+                    status_aktif = '$status_aktif' 
+                  WHERE id = '$id'";
         $result = mysqli_query($koneksi, $query);
 
         if ($result) {
-            header("Location: ../dashboard.php?tab=menu6");
+            echo "<script>
+                    alert('Data penempatan siswa berhasil diperbarui!');
+                    window.location.href = '../dashboard.php?tab=menu6';
+                  </script>";
             exit();
         } else {
-            $error = "Gagal memperbarui data ke database!";
+            $error = "Gagal memperbarui data ke database: " . mysqli_error($koneksi);
         }
     } else {
         $error = "Semua kolom wajib diisi!";
@@ -106,10 +114,11 @@ if (isset($_POST['update'])) {
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-semibold small">Tahun Ajaran (Maksimal 2027)</label>
+              <label class="form-label fw-semibold small">Tahun Ajaran (Dibatasi 2025 - 2027)</label>
               <select name="tahun_ajaran_id" class="form-select" required>
                 <option value="">-- Pilih Tahun Ajaran --</option>
                 <?php
+                // Tahun ajaran dibatasi sesuai permintaan
                 $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE nama LIKE '%2025%' OR nama LIKE '%2026%' OR nama LIKE '%2027%' ORDER BY id DESC");
                 while ($ta = mysqli_fetch_assoc($q_ta)) {
                     $selected = ($ta['id'] == $current['tahun_ajaran_id']) ? 'selected' : '';

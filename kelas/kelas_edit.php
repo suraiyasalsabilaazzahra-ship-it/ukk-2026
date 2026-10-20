@@ -4,13 +4,13 @@ include '../koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location:../login.php");
+    header("Location: ../login.php");
     exit();
 }
 
 $id = $_GET['id'] ?? '';
 if (empty($id)) {
-    header("Location:../dashboard.php?tab=menu3");
+    header("Location: ../dashboard.php?tab=menu3");
     exit();
 }
 
@@ -20,7 +20,7 @@ $q_data = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE id = '$id'");
 $data   = mysqli_fetch_assoc($q_data);
 
 if (!$data) {
-    echo "<script>alert('Data kelas tidak ditemukan!'); window.location.href='dashboard.php?tab=menu3';</script>";
+    echo "<script>alert('Data kelas tidak ditemukan!'); window.location.href='../dashboard.php?tab=menu3';</script>";
     exit();
 }
 
@@ -72,9 +72,9 @@ if (isset($_POST['update'])) {
           <div class="mb-3">
             <label class="form-label fw-bold">Tingkat</label>
             <select name="tingkat" class="form-select" required>
-              <option value="X" <?= ($data['tingkat'] == 'X') ? 'selected' : ''; ?>>X</option>
-              <option value="XI" <?= ($data['tingkat'] == 'XI') ? 'selected' : ''; ?>>XI</option>
-              <option value="XII" <?= ($data['tingkat'] == 'XII') ? 'selected' : ''; ?>>XII</option>
+              <option value="X" <?= (($data['tingkat'] ?? '') == 'X') ? 'selected' : ''; ?>>X</option>
+              <option value="XI" <?= (($data['tingkat'] ?? '') == 'XI') ? 'selected' : ''; ?>>XI</option>
+              <option value="XII" <?= (($data['tingkat'] ?? '') == 'XII') ? 'selected' : ''; ?>>XII</option>
             </select>
           </div>
 

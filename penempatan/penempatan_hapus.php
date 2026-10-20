@@ -3,7 +3,7 @@ session_start();
 include '../koneksi.php';
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: ../dashboard.php?tab=menu6");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -21,7 +21,7 @@ if (isset($_GET['id'])) {
         exit();
     } else {
         echo "<script>
-                alert('Gagal menghapus data penempatan!');
+                alert('Gagal menghapus data penempatan: " . mysqli_error($koneksi) . "');
                 window.location.href = '../dashboard.php?tab=menu6';
               </script>";
         exit();

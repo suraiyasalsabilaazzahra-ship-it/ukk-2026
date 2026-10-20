@@ -3,28 +3,36 @@ session_start();
 include '../koneksi.php';
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location:../ dashboard.php?tab=menu6");
+    header("Location: ../login.php");
     exit();
 }
 
 $error = "";
 
 if (isset($_POST['simpan'])) {
-    $siswa_id        = $_POST['siswa_id'];
-    $tahun_ajaran_id = $_POST['tahun_ajaran_id'];
-    $kelas_id        = $_POST['kelas_id'];
-    $status_aktif    = $_POST['status_aktif'];
+    $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
+    $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id'] ?? '');
+    $kelas_id        = mysqli_real_escape_string($koneksi, $_POST['kelas_id'] ?? '');
+    $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
     if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($kelas_id)) {
-        $query = "INSERT INTO t_kelas_siswa (siswa_id, tahun_ajaran_id, kelas_id, status_aktif) VALUES ('$siswa_id', '$tahun_ajaran_id', '$kelas_id', '$status_aktif')";
+        // Hitung ID manual untuk keamanan primary key
+        $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_kelas_siswa");
+        $r_max = mysqli_fetch_assoc($q_max);
+        $new_id = ($r_max['max_id'] ?? 0) + 1;
+
+        $query = "INSERT INTO t_kelas_siswa (id, siswa_id, tahun_ajaran_id, kelas_id, status_aktif) 
+                  VALUES ('$new_id', '$siswa_id', '$tahun_ajaran_id', '$kelas_id', '$status_aktif')";
         $result = mysqli_query($koneksi, $query);
 
         if ($result) {
-            // Redirect kembali ke dashboard dan langsung buka tab menu6 (Penempatan Siswa)
-            header("Location:../dashboard.php?tab=menu6");
+            echo "<script>
+                    alert('Berhasil! Data penempatan siswa baru telah ditambahkan.');
+                    window.location.href = '../dashboard.php?tab=menu6';
+                  </script>";
             exit();
         } else {
-            $error = "Gagal menyimpan data ke database!";
+            $error = "Gagal menyimpan data ke database: " . mysqli_error($koneksi);
         }
     } else {
         $error = "Semua kolom wajib diisi!";
@@ -90,11 +98,11 @@ if (isset($_POST['simpan'])) {
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-semibold small">Tahun Ajaran (Maksimal 2027)</label>
+              <label class="form-label fw-semibold small">Tahun Ajaran (Dibatasi 2025 - 2027)</label>
               <select name="tahun_ajaran_id" class="form-select" required>
                 <option value="">-- Pilih Tahun Ajaran --</option>
                 <?php
-                // Filter agar hanya menampilkan tahun ajaran yang mengandung angka 2025, 2026, atau 2027
+                // Tahun ajaran dibatasi sesuai permintaan
                 $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE nama LIKE '%2025%' OR nama LIKE '%2026%' OR nama LIKE '%2027%' ORDER BY id DESC");
                 while ($ta = mysqli_fetch_assoc($q_ta)) {
                     echo "<option value='{$ta['id']}'>{$ta['nama']}</option>";

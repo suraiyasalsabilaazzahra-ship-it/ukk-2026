@@ -4,7 +4,7 @@ include '../koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location:../login.php");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -26,7 +26,7 @@ if (isset($_POST['simpan'])) {
     if (mysqli_query($koneksi, $query)) {
         echo "<script>
                 alert('Berhasil! Data kelas baru telah ditambahkan.'); 
-                window.location.href='dashboard.php?tab=menu3';
+                window.location.href='../dashboard.php?tab=menu3';
               </script>";
         exit();
     } else {
