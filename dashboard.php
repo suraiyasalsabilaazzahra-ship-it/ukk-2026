@@ -201,24 +201,43 @@ if ($role === 'Guru') {
       <!-- KONTEN UTAMA -->
       <main class="col-md-9 col-lg-10 p-4 ms-md-auto">
 
-        <!-- TAB 1: DASHBOARD -->
+      <!-- TAB 1: DASHBOARD / BERANDA GURU -->
         <div id="tab-dashboard" class="tab-content" style="display: <?= ($active_tab === 'dashboard' || $active_tab === 'menu1') ? 'block' : 'none'; ?>;">
-          <?php include 'tab_dashboard.php'; ?>
+          <?php 
+          if ($role === 'Guru') {
+              include 'tab_beranda_guru.php';
+          } else {
+              include 'tab_dashboard.php'; 
+          }
+          ?>
         </div>
-
-        <!-- TAB 2: DATA GURU -->
+<!-- TAB 2: DATA GURU (Admin) / CATAT PELANGGARAN (Guru) -->
         <div id="tab-menu2" class="tab-content" style="display: <?= ($active_tab === 'menu2') ? 'block' : 'none'; ?>;">
-          <?php include 'tab_guru.php'; ?>
+          <?php 
+          if ($role === 'Guru') {
+              include 'pelanggaran/pelanggaran_tambah.php';
+          } else {
+              include 'tab_guru.php'; 
+          }
+          ?>
         </div>
 
-        <!-- TAB 3: DATA KELAS -->
-        <div id="tab-menu3" class="tab-content" style="display: <?= ($active_tab === 'menu3') ? 'block' : 'none'; ?>;">
-          <?php include 'tab_kelas.php'; ?>
+        <!-- TAB 3: DATA KELAS (Admin) / TINDAKAN (Guru) -->
+        <div id="tab-menu3" class="tab-content" style="display: <?= ($active_tab == 'menu3') ? 'block' : 'none'; ?>">
+            <?php
+            include 'tindakan/index.php';
+            ?>
         </div>
 
-        <!-- TAB 4: DATA SISWA -->
+      <!-- TAB 4: DATA SISWA (Admin) / PROFIL GURU (Guru) -->
         <div id="tab-menu4" class="tab-content" style="display: <?= ($active_tab === 'menu4') ? 'block' : 'none'; ?>;">
-          <?php include 'tab_siswa.php'; ?>
+          <?php 
+          if ($role === 'Guru') {
+              include 'profil_guru.php'; // <--- Hubungkan ke file profil guru yang baru dibuat
+          } else {
+              include 'tab_siswa.php'; 
+          }
+          ?>
         </div>
 
         <!-- TAB 5: DATA TAHUN AJARAN -->
@@ -250,39 +269,35 @@ if ($role === 'Guru') {
         <div id="tab-menu10" class="tab-content" style="display: <?= ($active_tab === 'menu10') ? 'block' : 'none'; ?>;">
           <?php include 'tab_laporan.php'; ?>
         </div>
-
-        <!-- TAB ABOUT ME -->
+             
+        <!-- TAB ABOUT ME (Profil Pengembang Aplikasi UKK) -->
         <div id="tab-menu_about" class="tab-content" style="display: <?= ($active_tab === 'menu_about') ? 'block' : 'none'; ?>;">
           <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div class="p-4 text-white" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
-              <h4 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2 text-warning"></i>Profil Pengembang / User</h4>
-              <p class="mb-0 text-white-50 small">Sistem Informasi UKK 2026</p>
+              <h4 class="mb-0 fw-bold"><i class="bi bi-code-slash me-2 text-warning"></i>Profil Pengembang Aplikasi</h4>
+              <p class="mb-0 text-white-50 small">Sistem Informasi Disiplin Siswa - UKK 2026</p>
             </div>
             <div class="card-body p-4 bg-white">
               <div class="row align-items-center">
                 <div class="col-md-4 text-center mb-3 mb-md-0 border-end border-light">
-                  <img src="foto-profil.jpg" alt="Foto Profil" class="img-fluid rounded-circle shadow border border-4 border-warning mb-3" style="width: 160px; height: 160px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/160?text=Form+Profil';">
-                  <h5 class="mb-0 fw-bold text-dark"><?= htmlspecialchars($nama); ?></h5>
-                  <span class="badge bg-warning text-dark mt-1 px-3 py-1 rounded-pill fw-semibold"><?= $role; ?></span>
+                  <img src="foto-profil.jpg" alt="Foto Pengembang" class="img-fluid rounded-circle shadow border border-4 border-warning mb-3" style="width: 160px; height: 160px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/160?text=Pengembang';">
+                  <!-- TULIS NAMA KAMU DI SINI -->
+                  <h5 class="mb-0 fw-bold text-dark">Nama Kamu (Pengembang)</h5>
+                  <span class="badge bg-primary mt-1 px-3 py-1 rounded-pill fw-semibold">Siswa / Programmer UKK</span>
                 </div>
                 <div class="col-md-8 ps-md-4">
-                  <h5 class="text-primary fw-bold mb-3"><i class="bi bi-info-square me-2"></i>Informasi Biodata</h5>
+                  <h5 class="text-primary fw-bold mb-3"><i class="bi bi-person-lines-fill me-2"></i>Biodata Pembuat Sistem</h5>
                   <table class="table table-borderless mb-0">
                     <tbody>
                       <tr>
                         <th width="30%" class="text-muted">Nama Lengkap</th>
                         <td width="5%">:</td>
-                        <td class="fw-semibold"><?= htmlspecialchars($nama); ?></td>
+                        <td class="fw-semibold">Suraiya salsabila az-zahra</td>
                       </tr>
                       <tr>
-                        <th class="text-muted">Email</th>
+                        <th class="text-muted">NISN / NIS</th>
                         <td>:</td>
-                        <td><?= htmlspecialchars($email); ?></td>
-                      </tr>
-                      <tr>
-                        <th class="text-muted">Role / Jabatan</th>
-                        <td>:</td>
-                        <td><?= $role; ?> Sistem</td>
+                        <td>0012345678</td>
                       </tr>
                       <tr>
                         <th class="text-muted">Kelas / Jurusan</th>
@@ -290,9 +305,14 @@ if ($role === 'Guru') {
                         <td>XII Rekayasa Perangkat Lunak (RPL)</td>
                       </tr>
                       <tr>
-                        <th class="text-muted">Proyek</th>
+                        <th class="text-muted">Sekolah</th>
                         <td>:</td>
-                        <td>Uji Kompetensi Keahlian (UKK) 2026</td>
+                        <td>SMK Negeri / Swasta</td>
+                      </tr>
+                      <tr>
+                        <th class="text-muted">Judul Proyek</th>
+                        <td>:</td>
+                        <td>Sistem Informasi Pelanggaran & Kedisiplinan Siswa (UKK 2026)</td>
                       </tr>
                     </tbody>
                   </table>
@@ -300,15 +320,10 @@ if ($role === 'Guru') {
               </div>
             </div>
             <div class="card-footer bg-light text-muted text-center py-3 border-0">
-              <small>&copy; 2026 UKK Project - Dikembangkan dengan dedikasi penuh.</small>
+              <small>&copy; 2026 UKK Project - Dikembangkan untuk Uji Kompetensi Keahlian RPL.</small>
             </div>
           </div>
         </div>
-
-      </main>
-
-    </div>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -1,125 +1,163 @@
 <?php
-session_start();
-include '../koneksi.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: ../dashboard.php?tab=menu9");
+if (file_exists('koneksi.php')) {
+    include 'koneksi.php';
+} elseif (file_exists('../koneksi.php')) {
+    include '../koneksi.php';
+} else {
+    include '../../koneksi.php';
+}
+
+if (!isset($_SESSION['login'] ) || $_SESSION['login'] !== true) {
+    header("Location: login.php");
     exit();
 }
 
-$error = "";
+$msg_error = "";
 
-if (isset($_POST['simpan'])) {
-    $siswa_id        = $_POST['siswa_id'] ?? '';
-    $pelanggaran_id  = $_POST['pelanggaran_id'] ?? '';
-    $tanggal         = $_POST['tanggal'] ?? '';
-    $poin            = $_POST['poin'] ?? 0;
+// PROSES SIMPAN KE TABEL TRANSAKSI YANG BENAR: t_pelanggaran_siswa
+if (isset($_POST['btn_simpan_pelanggaran'])) {
+    $siswa_id    = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
+    $kategori_id = mysqli_real_escape_string($koneksi, $_POST['kategori_id'] ?? '');
+    $tanggal     = mysqli_real_escape_string($koneksi, $_POST['tanggal'] ?? date('Y-m-d'));
+    $keterangan  = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
+    $user_id     = $_SESSION['user_id'] ?? 1; 
 
-    // Validasi data wajib
-    if (!empty($siswa_id) && !empty($pelanggaran_id) && !empty($tanggal)) {
-        // Amankan string dari SQL injection
-        $siswa_id       = mysqli_real_escape_string($koneksi, $siswa_id);
-        $pelanggaran_id = mysqli_real_escape_string($koneksi, $pelanggaran_id);
-        $tanggal        = mysqli_real_escape_string($koneksi, $tanggal);
-        $poin           = mysqli_real_escape_string($koneksi, $poin);
+    if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal)) {
+        // Ambil ID maksimum dari t_pelanggaran_siswa
+        $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_pelanggaran_siswa");
+        $r_max = ($q_max) ? mysqli_fetch_assoc($q_max) : ['max_id' => 0];
+        $next_id = ($r_max['max_id'] ?? 0) + 1;
 
-        // Query INSERT tanpa kolom catatan (sesuai kolom asli database t_pelanggaran_siswa)
-        $query = "INSERT INTO t_pelanggaran_siswa (siswa_id, pelanggaran_id, tanggal, poin) 
-                  VALUES ('$siswa_id', '$pelanggaran_id', '$tanggal', '$poin')";
-        
-        $result = mysqli_query($koneksi, $query);
-
-        if ($result) {
-            echo "<script>
-                    alert('Data pelanggaran berhasil disimpan ke database!');
-                    window.location.href = '../dashboard.php?tab=menu9';
-                  </script>";
-            exit();
-        } else {
-            $error = "Gagal menyimpan ke Database: " . mysqli_error($koneksi);
+        // Cek kolom yang ada di t_pelanggaran_siswa secara dinamis
+        $q_cek = mysqli_query($koneksi, "SHOW COLUMNS FROM t_pelanggaran_siswa");
+        $kolom_trans = [];
+        while ($row = mysqli_fetch_assoc($q_cek)) {
+            $kolom_trans[] = strtolower($row['Field']);
         }
+
+        // Tentukan nama kolom foreign key siswa & kategori di tabel t_pelanggaran_siswa
+        $f_siswa = in_array('siswa_id', $kolom_trans) ? 'siswa_id' : 'id_siswa';
+        $f_kat   = in_array('pelanggaran_kategori_id', $kolom_trans) ? 'pelanggaran_kategori_id' : (in_array('kategori_id', $kolom_trans) ? 'kategori_id' : 'id_kategori');
+        $f_ket   = in_array('keterangan', $kolom_trans) ? 'keterangan' : 'deskripsi';
+
+        // Susun query insert ke t_pelanggaran_siswa
+        $cols = ['id', $f_siswa, $f_kat, 'tanggal', $f_ket];
+        $vals = ["'$next_id'", "'$siswa_id'", "'$kategori_id'", "'$tanggal'", "'$keterangan'"];
+
+        if (in_array('user_id', $kolom_trans)) {
+            $cols[] = 'user_id';
+            $vals[] = "'$user_id'";
+        }
+
+        $query_insert = "INSERT INTO t_pelanggaran_siswa (" . implode(", ", $cols) . ") VALUES (" . implode(", ", $vals) . ")";
+        
+        try {
+            $exec = mysqli_query($koneksi, $query_insert);
+            if ($exec) {
+                echo "<script>
+                        alert('Berhasil! Data pelanggaran siswa tersimpan di t_pelanggaran_siswa.');
+                        window.location.href = 'dashboard.php?tab=menu2';
+                      </script>";
+                exit();
+            } else {
+                $msg_error = "Gagal Simpan: " . mysqli_error($koneksi);
+            }
+        } catch (\Throwable $th) {
+            $msg_error = "Error DB: " . $th->getMessage();
+        }
+
     } else {
-        $error = "Kolom Siswa, Jenis Pelanggaran, dan Tanggal wajib diisi!";
+        $msg_error = "Mohon lengkapi Siswa, Kategori Pelanggaran, dan Tanggal!";
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tambah Pelanggaran Siswa - UKK 2026</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
-    .card-form { background: #fff; border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .btn-maroon { background-color: #1b263b; color: #fff; border: none; }
-    .btn-maroon:hover { background-color: #0d1b2a; color: #fff; }
-  </style>
-</head>
-<body>
-  <div class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card card-form p-4">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Tambah Pelanggaran</h4>
-            <a href="../dashboard.php?tab=menu9" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+
+<div class="row">
+  <div class="col-12">
+    
+    <?php if (!empty($msg_error)): ?>
+      <div class="alert alert-danger shadow-sm mb-3" role="alert">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i><?= $msg_error; ?>
+      </div>
+    <?php endif; ?>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-5">
+      <div class="card-header bg-white py-3 px-4 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Catat Pelanggaran Siswa
+        </h5>
+      </div>
+
+      <div class="card-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto;">
+        <form action="" method="POST">
+          
+          <!-- Pilih Siswa -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">Pilih Siswa <span class="text-danger">*</span></label>
+            <select name="siswa_id" class="form-select py-2" required>
+              <option value="">-- Pilih Siswa --</option>
+              <?php
+              $q_siswa = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
+              if ($q_siswa) {
+                  while ($s = mysqli_fetch_assoc($q_siswa)) {
+                      $id_s   = $s['id'] ?? ($s['id_siswa'] ?? '');
+                      $nama_s = $s['nama'] ?? '';
+                      $nisn_s = $s['nisn'] ?? '';
+                      echo "<option value='{$id_s}'>" . htmlspecialchars($nama_s) . " (NISN: " . htmlspecialchars($nisn_s) . ")</option>";
+                  }
+              }
+              ?>
+            </select>
           </div>
 
-          <?php if (!empty($error)): ?>
-            <div class="alert alert-danger py-2 mb-3">
-              <i class="bi bi-exclamation-octagon-fill me-1"></i> <?= $error; ?>
-            </div>
-          <?php endif; ?>
+          <!-- Pilih Kategori & Poin -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">Kategori Pelanggaran & Poin <span class="text-danger">*</span></label>
+            <select name="kategori_id" class="form-select py-2" required>
+              <option value="">-- Pilih Jenis Pelanggaran --</option>
+              <?php
+              // Ambil dari t_pelanggaran_kategori
+              $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori ORDER BY id ASC");
+              if ($q_kat) {
+                  while ($k = mysqli_fetch_assoc($q_kat)) {
+                      $id_k   = $k['id'] ?? '';
+                      $nama_k = $k['nama'] ?? ($k['nama_kategori'] ?? 'Pelanggaran');
+                      $poin_k = $k['poin'] ?? 0;
+                      
+                      echo "<option value='{$id_k}'>" . htmlspecialchars($nama_k) . " (Poin: +" . htmlspecialchars($poin_k) . ")</option>";
+                  }
+              }
+              ?>
+            </select>
+          </div>
 
-          <form action="" method="POST">
-            <div class="mb-3">
-              <label class="form-label fw-semibold small">Pilih Siswa</label>
-              <select name="siswa_id" class="form-select" required>
-                <option value="">-- Pilih Siswa --</option>
-                <?php
-                $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
-                while ($s = mysqli_fetch_assoc($q_s)) {
-                    echo "<option value='{$s['id']}'>{$s['nama']} (NISN: {$s['nisn']})</option>";
-                }
-                ?>
-              </select>
-            </div>
+          <!-- Tanggal Kejadian -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">Tanggal Kejadian <span class="text-danger">*</span></label>
+            <input type="date" name="tanggal" class="form-control py-2" value="<?= date('Y-m-d'); ?>" required>
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-semibold small">Pilih Jenis Pelanggaran</label>
-              <select name="pelanggaran_id" class="form-select" required>
-                <option value="">-- Pilih Pelanggaran --</option>
-                <?php
-                $q_p = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran ORDER BY nama ASC");
-                while ($p = mysqli_fetch_assoc($q_p)) {
-                    $nm_pelanggaran = $p['nama'] ?? 'Pelanggaran';
-                    $poin_default   = $p['poin'] ?? 0;
-                    echo "<option value='{$p['id']}'>[{$p['kode']}] {$nm_pelanggaran} ({$poin_default} Poin)</option>";
-                }
-                ?>
-              </select>
-            </div>
+          <!-- Keterangan -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary small">Keterangan / Catatan Tambahan</label>
+            <textarea name="keterangan" class="form-control" rows="3" placeholder="Masukkan rincian pelanggaran..."></textarea>
+          </div>
 
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold small">Tanggal Kejadian</label>
-                <input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d'); ?>" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold small">Jumlah Poin</label>
-                <input type="number" name="poin" class="form-control" placeholder="Contoh: 10" value="10" required>
-              </div>
-            </div>
+          <!-- Tombol Simpan -->
+          <div class="pt-3 border-top d-flex justify-content-end gap-2">
+            <button type="reset" class="btn btn-light px-4 fw-semibold border">Reset</button>
+            <button type="submit" name="btn_simpan_pelanggaran" class="btn px-4 fw-semibold py-2 text-white shadow-sm" style="background-color: #1b263b;">
+              <i class="bi bi-save me-1"></i> Simpan Pelanggaran
+            </button>
+          </div>
 
-            <button type="submit" name="simpan" class="btn btn-maroon w-100 py-2 fw-semibold rounded-pill mt-3">Simpan Pelanggaran</button>
-          </form>
-        </div>
+        </form>
       </div>
     </div>
+
   </div>
-</body>
-</html>
+</div>
