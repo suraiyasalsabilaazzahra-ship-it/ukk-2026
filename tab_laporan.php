@@ -1,27 +1,18 @@
 <?php
 // Ambil filter tanggal jika ada
-$tgl_mulai = isset($_GET['tgl_mulai']) ? $_GET['tgl_mulai'] : '';
+$tgl_mulai   = isset($_GET['tgl_mulai']) ? $_GET['tgl_mulai'] : '';
 $tgl_selesai = isset($_GET['tgl_selesai']) ? $_GET['tgl_selesai'] : '';
 
-// Query disesuaikan dengan kolom status_aktif pada tabel t_kelas_siswa
-$sql_laporan = "SELECT ps.*, 
-                       COALESCE(s.nama, ps.nama_siswa, 'Siswa Tidak Ditemukan') AS nama_mhs, 
-                       COALESCE(kls.nama, ps.nama_kelas, '-') AS kelas_mhs, 
-                       COALESCE(p.nama, ps.nama_pelanggaran, 'Pelanggaran') AS jenis_plg
-                FROM t_pelanggaran_siswa ps
-                LEFT JOIN t_siswa s ON ps.siswa_id = s.id
-                LEFT JOIN t_kelas_siswa ks ON s.id = ks.siswa_id AND ks.status_aktif = 1
-                LEFT JOIN t_kelas kls ON ks.kelas_id = kls.id
-                LEFT JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id
-                WHERE 1=1";
+// Query paling dasar dan aman 100% dijamin tampil
+$sql_laporan = "SELECT * FROM t_pelanggaran_siswa WHERE 1=1";
 
 if (!empty($tgl_mulai) && !empty($tgl_selesai)) {
     $tgl_mulai = mysqli_real_escape_string($koneksi, $tgl_mulai);
     $tgl_selesai = mysqli_real_escape_string($koneksi, $tgl_selesai);
-    $sql_laporan .= " AND ps.tanggal BETWEEN '$tgl_mulai' AND '$tgl_selesai'";
+    $sql_laporan .= " AND tanggal BETWEEN '$tgl_mulai' AND '$tgl_selesai'";
 }
 
-$sql_laporan .= " ORDER BY ps.tanggal DESC";
+$sql_laporan .= " ORDER BY tanggal DESC, id DESC";
 $query_laporan = mysqli_query($koneksi, $sql_laporan);
 ?>
 
@@ -106,15 +97,28 @@ $query_laporan = mysqli_query($koneksi, $sql_laporan);
           $no = 1;
           while ($row = mysqli_fetch_assoc($query_laporan)) {
             $tgl = !empty($row['tanggal']) ? date('d/m/Y', strtotime($row['tanggal'])) : '-';
+            
+            $nama_Siswa  = $row['nama_siswa'] ?? 'Siswa Tidak Ditemukan';
+            $jenis_Plg   = $row['nama_pelanggaran'] ?? 'Pelanggaran';
+            $poin_Plg    = $row['poin'] ?? 0;
+            
+            // Cari nama kelas secara kilat berdasarkan siswa_id dari tabel t_kelas_siswa & t_kelas
+            $siswa_id_val = $row['siswa_id'];
+            $q_kelas = mysqli_query($koneksi, "SELECT k.nama FROM t_kelas_siswa ks JOIN t_kelas k ON ks.kelas_id = k.id WHERE ks.siswa_id = '$siswa_id_val' LIMIT 1");
+            if ($q_kelas && $r_kelas = mysqli_fetch_assoc($q_kelas)) {
+                $kelas_Siswa = $r_kelas['nama'];
+            } else {
+                $kelas_Siswa = '-';
+            }
         ?>
             <tr>
               <td class="text-center fw-bold text-muted"><?= $no++; ?></td>
               <td>
-                <span class="fw-semibold text-dark"><?= htmlspecialchars($row['nama_mhs']); ?></span>
+                <span class="fw-semibold text-dark"><?= htmlspecialchars($nama_Siswa); ?></span>
               </td>
-              <td><span class="fw-semibold text-dark"><?= htmlspecialchars($row['kelas_mhs']); ?></span></td>
+              <td><span class="fw-semibold text-dark"><?= htmlspecialchars($kelas_Siswa); ?></span></td>
               <td>
-                <span class="fw-medium text-dark"><?= htmlspecialchars($row['jenis_plg']); ?></span>
+                <span class="fw-medium text-dark"><?= htmlspecialchars($jenis_Plg); ?></span>
                 <?php if (!empty($row['keterangan'])): ?>
                   <br><small class="text-muted">Ket: <?= htmlspecialchars($row['keterangan']); ?></small>
                 <?php endif; ?>
@@ -122,7 +126,7 @@ $query_laporan = mysqli_query($koneksi, $sql_laporan);
               <td class="text-center text-muted small"><?= $tgl; ?></td>
               <td class="text-center">
                 <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold">
-                  +<?= htmlspecialchars($row['poin'] ?? 0); ?>
+                  +<?= htmlspecialchars($poin_Plg); ?>
                 </span>
               </td>
             </tr>

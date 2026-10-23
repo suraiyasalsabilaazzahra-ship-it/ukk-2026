@@ -11,7 +11,7 @@ $cari = isset($_GET['cari_kategori']) ? mysqli_real_escape_string($koneksi, $_GE
 
 // 4. Hitung total seluruh data untuk menentukan jumlah tombol halaman
 if (!empty($cari)) {
-  $query_total = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama LIKE '%$cari%' OR deskripsi LIKE '%$cari%'");
+  $query_total = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama_kategori LIKE '%$cari%' OR deskripsi LIKE '%$cari%'");
 } else {
   $query_total = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori");
 }
@@ -21,11 +21,43 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
 
 // 5. Query data dengan limit paginasi dan pencarian
 if (!empty($cari)) {
-  $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama LIKE '%$cari%' OR deskripsi LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
+  $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama_kategori LIKE '%$cari%' OR deskripsi LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
 } else {
   $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori ORDER BY id DESC LIMIT $halaman_awal, $batas");
 }
 ?>
+
+<!-- KOTAK KETERANGAN / PANDUAN KATEGORI & POIN OTOMATIS -->
+<div class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
+  <div class="card-header text-white p-3" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
+    <h5 class="mb-0 fw-bold fs-6"><i class="bi bi-info-circle-fill text-warning me-2"></i>Panduan Sistem Poin & Kategori Pelanggaran Sekolah</h5>
+  </div>
+  <div class="card-body bg-white p-3">
+    <div class="row text-center g-2">
+      <div class="col-md-4">
+        <div class="p-2 border rounded-3 bg-light">
+          <span class="badge bg-info text-dark mb-1 px-2 py-1">RINGAN</span>
+          <p class="mb-0 small fw-bold text-muted">Poin: 5 s.d. 15</p>
+          <small class="text-secondary" style="font-size: 11px;">Contoh: Terlambat, atribut tidak lengkap</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-2 border rounded-3 bg-light">
+          <span class="badge bg-warning text-dark mb-1 px-2 py-1">SEDANG</span>
+          <p class="mb-0 small fw-bold text-muted">Poin: 20 s.d. 50</p>
+          <small class="text-secondary" style="font-size: 11px;">Contoh: Membolos, merusak fasilitas ringan</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-2 border rounded-3 bg-light">
+          <span class="badge bg-danger mb-1 px-2 py-1">BERAT</span>
+          <p class="mb-0 small fw-bold text-muted">Poin: 55 s.d. 100</p>
+          <small class="text-secondary" style="font-size: 11px;">Contoh: Berkelahi, membawa senjata/barang terlarang</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h4 class="fw-bold text-dark mb-0"><i class="bi bi-tags text-warning me-2"></i>Kategori Pelanggaran</h4>
@@ -38,7 +70,6 @@ if (!empty($cari)) {
 <div class="card border-0 shadow-sm mb-4 rounded-3">
   <div class="card-body p-3">
     <form action="dashboard.php" method="GET" class="row g-2 align-items-center">
-      <!-- Wajib menyertakan parameter tab agar tetap berada di menu Kategori Pelanggaran -->
       <input type="hidden" name="tab" value="menu7">
       <div class="col-md-10">
         <div class="input-group">
@@ -64,9 +95,9 @@ if (!empty($cari)) {
         <tr>
           <th class="py-3 px-3" style="width: 5%;">NO</th>
           <th class="py-3">NAMA KATEGORI PELANGGARAN</th>
+          <th class="py-3 text-center" style="width: 10%;">POIN</th>
           <th class="py-3">DESKRIPSI</th>
-          <th class="py-3 text-center" style="width: 15%;">JENIS</th>
-          <th class="py-3 text-center" style="width: 12%;">STATUS</th>
+          <th class="py-3 text-center" style="width: 15%;">JENIS (OTOMATIS)</th>
           <th class="py-3 text-center" style="width: 15%;">AKSI</th>
         </tr>
       </thead>
@@ -75,29 +106,27 @@ if (!empty($cari)) {
         if ($query_kat && mysqli_num_rows($query_kat) > 0) {
           $no = $halaman_awal + 1;
           while ($row = mysqli_fetch_assoc($query_kat)) {
-            // Tentukan warna badge
-            $jenis = $row['jenis'] ?? 'Sedang';
-            if (stripos($jenis, 'Ringan') !== false) {
-              $badge_bg = 'bg-info bg-opacity-10 text-info';
-            } elseif (stripos($jenis, 'Tinggi') !== false || stripos($jenis, 'Berat') !== false) {
-              $badge_bg = 'bg-danger bg-opacity-10 text-danger';
+            $poin = (int)($row['poin'] ?? 0);
+            
+            // Sistem otomatis menentukan jenis berdasarkan jumlah poin
+            if ($poin >= 1 && $poin <= 15) {
+              $jenis = "Ringan";
+              $badge_bg = "bg-info bg-opacity-10 text-info border border-info";
+            } elseif ($poin >= 20 && $poin <= 50) {
+              $jenis = "Sedang";
+              $badge_bg = "bg-warning bg-opacity-10 text-warning text-dark border border-warning";
             } else {
-              $badge_bg = 'bg-warning bg-opacity-10 text-warning text-dark';
+              $jenis = "Berat";
+              $badge_bg = "bg-danger bg-opacity-10 text-danger border border-danger";
             }
         ?>
             <tr>
               <td class="fw-bold px-3 text-muted"><?= $no++; ?></td>
-              <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama'] ?? $row['nama_kategori']); ?></td>
-              <td class="text-muted small"><?= htmlspecialchars($row['deskripsi']); ?></td>
+              <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama_kategori'] ?? ''); ?></td>
+              <td class="text-center fw-bold text-primary"><?= $poin; ?></td>
+              <td class="text-muted small"><?= htmlspecialchars($row['deskripsi'] ?? '-'); ?></td>
               <td class="text-center">
-                <span class="badge <?= $badge_bg; ?> px-3 py-2"><?= htmlspecialchars($jenis); ?></span>
-              </td>
-              <td class="text-center">
-                <?php if (($row['status_aktif'] ?? 1) == 1): ?>
-                  <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Aktif</span>
-                <?php else: ?>
-                  <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Tidak Aktif</span>
-                <?php endif; ?>
+                <span class="badge <?= $badge_bg; ?> px-3 py-1 fw-bold"><?= $jenis; ?></span>
               </td>
               <td class="text-center">
                 <a href="kategori/kategori_edit.php?id=<?= $row['id']; ?>" class="btn btn-sm btn-warning text-white px-2 py-1 me-1"><i class="bi bi-pencil-square"></i></a>
@@ -114,7 +143,7 @@ if (!empty($cari)) {
     </table>
   </div>
 
-  <!-- NAVIGASI PAGINASI / TOMBOL HALAMAN -->
+  <!-- NAVIGASI PAGINASI -->
   <?php if ($total_halaman > 1): ?>
   <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
     <small class="text-muted">
@@ -123,31 +152,19 @@ if (!empty($cari)) {
     
     <nav>
       <ul class="pagination pagination-sm mb-0">
-        <!-- Tombol Sebelumnya -->
         <li class="page-item <?= ($halaman <= 1) ? 'disabled' : ''; ?>">
-          <a class="page-link" href="dashboard.php?tab=menu7&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_kategori='.$cari : ''; ?>">
-            Sebelumnya
-          </a>
+          <a class="page-link" href="dashboard.php?tab=menu7&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_kategori='.$cari : ''; ?>">Sebelumnya</a>
         </li>
-
-        <!-- Tombol Angka Halaman (1, 2, 3...) -->
         <?php for ($x = 1; $x <= $total_halaman; $x++): ?>
           <li class="page-item <?= ($halaman == $x) ? 'active' : ''; ?>">
-            <a class="page-link" style="<?= ($halaman == $x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu7&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_kategori='.$cari : ''; ?>">
-              <?= $x; ?>
-            </a>
+            <a class="page-link" style="<?= ($halaman == $x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu7&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_kategori='.$cari : ''; ?>"><?= $x; ?></a>
           </li>
         <?php endfor; ?>
-
-        <!-- Tombol Lanjutkan / Selanjutnya -->
         <li class="page-item <?= ($halaman >= $total_halaman) ? 'disabled' : ''; ?>">
-          <a class="page-link" href="dashboard.php?tab=menu7&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_kategori='.$cari : ''; ?>">
-            Lanjutkan
-          </a>
+          <a class="page-link" href="dashboard.php?tab=menu7&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_kategori='.$cari : ''; ?>">Lanjutkan</a>
         </li>
       </ul>
     </nav>
   </div>
   <?php endif; ?>
-
 </div>

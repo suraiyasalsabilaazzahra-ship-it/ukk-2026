@@ -11,13 +11,13 @@ $cari = isset($_GET['cari_siswa']) ? mysqli_real_escape_string($koneksi, $_GET['
 
 // 4. Hitung total seluruh data siswa
 if (!empty($cari)) {
-    $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%'");
+    $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR kelas LIKE '%$cari%'");
 } else {
     $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa");
 }
 
 $total_data = ($query_total) ? mysqli_num_rows($query_total) : 0;
-$total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
+$total_halaman = ceil($total_data / $batas); 
 ?>
 <div class="custom-table-card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -39,7 +39,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
         <div class="col-md-10">
           <div class="input-group">
             <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" name="cari_siswa" class="form-control border-start-0 ps-0" placeholder="Cari nama siswa atau NISN..." value="<?= htmlspecialchars($cari); ?>">
+            <input type="text" name="cari_siswa" class="form-control border-start-0 ps-0" placeholder="Cari nama siswa, NISN, atau kelas..." value="<?= htmlspecialchars($cari); ?>">
           </div>
         </div>
         <div class="col-md-2 d-flex gap-2">
@@ -57,31 +57,39 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
     <table class="table table-hover mb-0">
       <thead style="background-color: #1b263b; color: white;">
         <tr>
-          <th width="8%">NO</th>
-          <th width="20%">NISN</th>
+          <th width="6%">NO</th>
+          <th width="15%">NISN</th>
           <th>NAMA SISWA</th>
-          <th width="15%" class="text-center">L/P</th>
-          <th width="15%" class="text-center">AKSI</th>
+          <th width="15%">KELAS</th>
+          <th width="15%">JURUSAN</th>
+          <th width="10%" class="text-center">L/P</th>
+          <th width="12%" class="text-center">AKSI</th>
         </tr>
       </thead>
       <tbody>
         <?php
-        // 5. Query data siswa dengan LIMIT
         if (!empty($cari)) {
-            $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
+            $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR kelas LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
         } else {
             $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY id DESC LIMIT $halaman_awal, $batas");
         }
 
         if ($q_sis && mysqli_num_rows($q_sis) > 0) {
-            $no = $halaman_awal + 1; // Perhitungan nomor urut berurutan
+            $no = $halaman_awal + 1;
             while ($s = mysqli_fetch_assoc($q_sis)) {
                 $jk = $s['jenis_kelamin'] ?? '-';
                 $jk_badge = ($jk == 'L') ? '<span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1">Laki-Laki</span>' : '<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1">Perempuan</span>';
+                
+                // Mengambil data kelas dan jurusan jika ada di database
+                $kelas_siswa = $s['kelas'] ?? '-';
+                $jurusan_siswa = $s['jurusan'] ?? '-';
+
                 echo "<tr>
                         <td class='fw-bold text-muted'>{$no}</td>
                         <td>{$s['nisn']}</td>
                         <td class='fw-semibold'>{$s['nama']}</td>
+                        <td><span class='badge bg-light text-dark border'>{$kelas_siswa}</span></td>
+                        <td>{$jurusan_siswa}</td>
                         <td class='text-center'>{$jk_badge}</td>
                         <td class='text-center'>
                           <a href='siswa/siswa_edit.php?id={$s['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>
@@ -91,14 +99,14 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
                 $no++;
             }
         } else {
-            echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada data siswa ditemukan</td></tr>";
+            echo "<tr><td colspan='7' class='text-center py-4 text-muted'>Belum ada data siswa ditemukan</td></tr>";
         }
         ?>
       </tbody>
     </table>
   </div>
 
-  <!-- NAVIGASI PAGINASI / TOMBOL HALAMAN -->
+  <!-- NAVIGASI PAGINASI -->
   <?php if ($total_halaman > 1): ?>
   <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
     <small class="text-muted">
@@ -107,31 +115,19 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
     
     <nav>
       <ul class="pagination pagination-sm mb-0">
-        <!-- Tombol Sebelumnya -->
         <li class="page-item <?= ($halaman <= 1) ? 'disabled' : ''; ?>">
-          <a class="page-link" href="dashboard.php?tab=menu4&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_siswa='.$cari : ''; ?>">
-            Sebelumnya
-          </a>
+          <a class="page-link" href="dashboard.php?tab=menu4&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_siswa='.$cari : ''; ?>">Sebelumnya</a>
         </li>
-
-        <!-- Tombol Angka Halaman (1, 2, 3...) -->
         <?php for ($x = 1; $x <= $total_halaman; $x++): ?>
           <li class="page-item <?= ($halaman == $x) ? 'active' : ''; ?>">
-            <a class="page-link" style="<?= ($halaman == $x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu4&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_siswa='.$cari : ''; ?>">
-              <?= $x; ?>
-            </a>
+            <a class="page-link" style="<?= ($halaman == $x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu4&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_siswa='.$cari : ''; ?>"><?= $x; ?></a>
           </li>
         <?php endfor; ?>
-
-        <!-- Tombol Lanjutkan / Selanjutnya -->
         <li class="page-item <?= ($halaman >= $total_halaman) ? 'disabled' : ''; ?>">
-          <a class="page-link" href="dashboard.php?tab=menu4&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_siswa='.$cari : ''; ?>">
-            Lanjutkan
-          </a>
+          <a class="page-link" href="dashboard.php?tab=menu4&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_siswa='.$cari : ''; ?>">Lanjutkan</a>
         </li>
       </ul>
     </nav>
   </div>
   <?php endif; ?>
-
 </div>
