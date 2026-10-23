@@ -222,10 +222,14 @@ if ($role === 'Guru') {
           ?>
         </div>
 
-        <!-- TAB 3: DATA KELAS (Admin) / TINDAKAN (Guru) -->
+      <!-- TAB 3: DATA KELAS (Admin) / TINDAKAN (Guru) -->
         <div id="tab-menu3" class="tab-content" style="display: <?= ($active_tab == 'menu3') ? 'block' : 'none'; ?>">
             <?php
-            include 'tindakan/index.php';
+            if ($role === 'Guru') {
+                include 'tindakan/index.php';
+            } else {
+                include 'tab_kelas.php';
+            }
             ?>
         </div>
 
