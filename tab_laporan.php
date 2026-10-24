@@ -1,39 +1,83 @@
 <?php
-// Ambil filter tanggal jika ada
+// tab_laporan.php
 $tgl_mulai   = isset($_GET['tgl_mulai']) ? $_GET['tgl_mulai'] : '';
 $tgl_selesai = isset($_GET['tgl_selesai']) ? $_GET['tgl_selesai'] : '';
 
-// Query paling dasar dan aman 100% dijamin tampil
-$sql_laporan = "SELECT * FROM t_pelanggaran_siswa WHERE 1=1";
-
-if (!empty($tgl_mulai) && !empty($tgl_selesai)) {
-    $tgl_mulai = mysqli_real_escape_string($koneksi, $tgl_mulai);
-    $tgl_selesai = mysqli_real_escape_string($koneksi, $tgl_selesai);
-    $sql_laporan .= " AND tanggal BETWEEN '$tgl_mulai' AND '$tgl_selesai'";
-}
-
-$sql_laporan .= " ORDER BY tanggal DESC, id DESC";
+$sql_laporan = "SELECT * FROM t_pelanggaran_siswa ORDER BY tanggal DESC, id DESC";
 $query_laporan = mysqli_query($koneksi, $sql_laporan);
+
+$data_laporan = [];
+if ($query_laporan) {
+    while ($row = mysqli_fetch_assoc($query_laporan)) {
+        // Filter tanggal jika diisi
+        if (!empty($tgl_mulai) && !empty($tgl_selesai)) {
+            if ($row['tanggal'] < $tgl_mulai || $row['tanggal'] > $tgl_selesai) {
+                continue;
+            }
+        }
+
+        // Nama Siswa & NISN
+        $nama_s = !empty($row['nama_siswa']) ? $row['nama_siswa'] : '';
+        $nisn_s = '-';
+        if (empty($nama_s) && !empty($row['siswa_id'])) {
+            $sid = $row['siswa_id'];
+            $q_s = mysqli_query($koneksi, "SELECT nama, nisn FROM t_siswa WHERE id = '$sid' LIMIT 1");
+            if ($q_s && $data_s = mysqli_fetch_assoc($q_s)) {
+                $nama_s = $data_s['nama'] ?? 'Siswa Tidak Ditemukan';
+                $nisn_s = $data_s['nisn'] ?? '-';
+            }
+        }
+        if (empty($nama_s)) $nama_s = 'Siswa Tidak Ditemukan';
+
+        // Kelas Siswa
+        $kelas_Siswa = '-';
+        if (!empty($row['siswa_id'])) {
+            $sid = $row['siswa_id'];
+            $q_k = mysqli_query($koneksi, "SELECT k.nama FROM t_kelas_siswa ks JOIN t_kelas k ON ks.kelas_id = k.id WHERE ks.siswa_id = '$sid' LIMIT 1");
+            if ($q_k && $r_k = mysqli_fetch_assoc($q_k)) {
+                $kelas_Siswa = $r_k['nama'];
+            }
+        }
+
+        // Jenis Pelanggaran & Poin
+        $nama_p = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : '';
+        $poin_p = $row['poin'] ?? 0;
+
+        $kid = !empty($row['pelanggaran_kategori_id']) ? $row['pelanggaran_kategori_id'] : (!empty($row['pelanggaran_id']) ? $row['pelanggaran_id'] : '');
+        if ((empty($nama_p) || $poin_p == 0) && !empty($kid)) {
+            $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kid' LIMIT 1");
+            if (!$q_kat || mysqli_num_rows($q_kat) == 0) {
+                $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran WHERE id = '$kid' LIMIT 1");
+            }
+            if ($q_kat && $data_kat = mysqli_fetch_assoc($q_kat)) {
+                if (empty($nama_p)) {
+                    $nama_p = $data_kat['nama_kategori'] ?? ($data_kat['nama'] ?? 'Pelanggaran Umum');
+                }
+                if ($poin_p == 0) {
+                    $poin_p = $data_kat['poin'] ?? 0;
+                }
+            }
+        }
+        if (empty($nama_p)) $nama_p = 'Pelanggaran Umum';
+
+        $row['computed_nama_siswa'] = $nama_s;
+        $row['computed_nisn'] = $nisn_s;
+        $row['computed_kelas'] = $kelas_Siswa;
+        $row['computed_nama_pelanggaran'] = $nama_p;
+        $row['computed_poin'] = $poin_p;
+
+        $data_laporan[] = $row;
+    }
+}
 ?>
 
 <!-- STYLE KHUSUS CETAK -->
 <style>
 @media print {
-  body * {
-    visibility: hidden;
-  }
-  #area-cetak, #area-cetak * {
-    visibility: visible;
-  }
-  #area-cetak {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  .no-print {
-    display: none !important;
-  }
+  body * { visibility: hidden; }
+  #area-cetak, #area-cetak * { visibility: visible; }
+  #area-cetak { position: absolute; left: 0; top: 0; width: 100%; }
+  .no-print { display: none !important; }
 }
 </style>
 
@@ -93,32 +137,20 @@ $query_laporan = mysqli_query($koneksi, $sql_laporan);
       </thead>
       <tbody>
         <?php
-        if ($query_laporan && mysqli_num_rows($query_laporan) > 0) {
+        if (!empty($data_laporan)) {
           $no = 1;
-          while ($row = mysqli_fetch_assoc($query_laporan)) {
+          foreach ($data_laporan as $row) {
             $tgl = !empty($row['tanggal']) ? date('d/m/Y', strtotime($row['tanggal'])) : '-';
-            
-            $nama_Siswa  = $row['nama_siswa'] ?? 'Siswa Tidak Ditemukan';
-            $jenis_Plg   = $row['nama_pelanggaran'] ?? 'Pelanggaran';
-            $poin_Plg    = $row['poin'] ?? 0;
-            
-            // Cari nama kelas secara kilat berdasarkan siswa_id dari tabel t_kelas_siswa & t_kelas
-            $siswa_id_val = $row['siswa_id'];
-            $q_kelas = mysqli_query($koneksi, "SELECT k.nama FROM t_kelas_siswa ks JOIN t_kelas k ON ks.kelas_id = k.id WHERE ks.siswa_id = '$siswa_id_val' LIMIT 1");
-            if ($q_kelas && $r_kelas = mysqli_fetch_assoc($q_kelas)) {
-                $kelas_Siswa = $r_kelas['nama'];
-            } else {
-                $kelas_Siswa = '-';
-            }
         ?>
             <tr>
               <td class="text-center fw-bold text-muted"><?= $no++; ?></td>
               <td>
-                <span class="fw-semibold text-dark"><?= htmlspecialchars($nama_Siswa); ?></span>
+                <span class="fw-semibold text-dark"><?= htmlspecialchars($row['computed_nama_siswa']); ?></span>
+                <br><small class="text-muted">NISN: <?= htmlspecialchars($row['computed_nisn']); ?></small>
               </td>
-              <td><span class="fw-semibold text-dark"><?= htmlspecialchars($kelas_Siswa); ?></span></td>
+              <td><span class="fw-semibold text-dark"><?= htmlspecialchars($row['computed_kelas']); ?></span></td>
               <td>
-                <span class="fw-medium text-dark"><?= htmlspecialchars($jenis_Plg); ?></span>
+                <span class="fw-medium text-dark"><?= htmlspecialchars($row['computed_nama_pelanggaran']); ?></span>
                 <?php if (!empty($row['keterangan'])): ?>
                   <br><small class="text-muted">Ket: <?= htmlspecialchars($row['keterangan']); ?></small>
                 <?php endif; ?>
@@ -126,7 +158,7 @@ $query_laporan = mysqli_query($koneksi, $sql_laporan);
               <td class="text-center text-muted small"><?= $tgl; ?></td>
               <td class="text-center">
                 <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold">
-                  +<?= htmlspecialchars($poin_Plg); ?>
+                  +<?= htmlspecialchars($row['computed_poin']); ?>
                 </span>
               </td>
             </tr>

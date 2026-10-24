@@ -68,11 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="container mt-5" style="max-width: 500px;">
     <header class="p-3 mb-4 bg-dark text-white rounded shadow-sm">
       <h1 class="h3 mb-1">Portal UKK 2026</h1>
-      <p class="mb-0 text-white-50">Silakan masuk menggunakan akun Anda</p>
+      <p class="mb-0 text-black-50">Silakan masuk menggunakan akun Anda</p>
     </header>
 
     <?php if ($error): ?>
-      <div class="alert alert-danger"><?= $error; ?></div>
+      <div class="alert alert-warning"><?= $error; ?></div>
     <?php endif; ?>
 
     <main class="card p-4 shadow-sm border-0 rounded-4">
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
         </div>
 
-        <button type="submit" class="btn btn-danger w-100 fw-bold py-2">Masuk Dashboard</button>
+        <button type="submit" class="btn btn-warning w-100 fw-bold py-2">Masuk Dashboard</button>
       </form>
 
       <hr class="my-4">

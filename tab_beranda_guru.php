@@ -1,9 +1,8 @@
 <?php
-// Hitung data untuk statistik guru
 $q_ts = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_siswa");
 $tot_siswa = ($q_ts) ? mysqli_fetch_assoc($q_ts)['total'] : 0;
 
-$q_tp = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran");
+$q_tp = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_siswa");
 $tot_pelanggaran = ($q_tp) ? mysqli_fetch_assoc($q_tp)['total'] : 0;
 
 $q_tk = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_pelanggaran_kategori");
@@ -11,11 +10,10 @@ $tot_kategori = ($q_tk) ? mysqli_fetch_assoc($q_tk)['total'] : 0;
 ?>
 
 <div class="main-header-card mb-4">
- <h3 class="fw-bold text-dark mb-1">Selamat Datang, Guru!</h3>
+  <h3 class="fw-bold text-dark mb-1">Selamat Datang, Guru!</h3>
   <p class="text-muted mb-0"><i class="bi bi-envelope me-1"></i><?= htmlspecialchars($email); ?> | Logged in as <span class="fw-semibold text-dark">Guru</span></p>
 </div>
 
-<!-- Kotak Statistik ala Admin -->
 <div class="row g-4 mb-4">
   <div class="col-md-4">
     <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-danger border-4">

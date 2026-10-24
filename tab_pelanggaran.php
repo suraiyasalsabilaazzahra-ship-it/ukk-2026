@@ -1,42 +1,75 @@
 <?php
-// 1. Tentukan batas data per halaman
+// tab_pelanggaran.php
 $batas = 10; 
-
-// 2. Ambil halaman saat ini dari URL
 $halaman = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
 $halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
-
-// 3. Ambil kata kunci pencarian jika ada
 $cari = isset($_GET['cari_pelanggaran']) ? mysqli_real_escape_string($koneksi, $_GET['cari_pelanggaran']) : '';
 
-// 4. Hitung total seluruh data untuk paginasi
-$sql_count = "SELECT COUNT(*) AS total 
-              FROM t_pelanggaran_siswa ps
-              LEFT JOIN t_siswa s ON ps.siswa_id = s.id
-              LEFT JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id";
-
-if (!empty($cari)) {
-  $sql_count .= " WHERE s.nama LIKE '%$cari%' OR s.nisn LIKE '%$cari%' OR p.nama LIKE '%$cari%' OR p.kode LIKE '%$cari%'";
-}
-
-$query_total = mysqli_query($koneksi, $sql_count);
-$total_data = ($query_total) ? mysqli_fetch_assoc($query_total)['total'] : 0;
-$total_halaman = ceil($total_data / $batas);
-
-// 5. Query data utama
-$sql_data = "SELECT ps.*, s.nama AS nama_siswa, s.nisn, 
-                    COALESCE(p.nama, 'Pelanggaran') AS nama_pelanggaran,
-                    COALESCE(p.kode, '-') AS kode_pelanggaran
-             FROM t_pelanggaran_siswa ps
-             LEFT JOIN t_siswa s ON ps.siswa_id = s.id
-             LEFT JOIN t_pelanggaran p ON ps.pelanggaran_id = p.id";
-
-if (!empty($cari)) {
-  $sql_data .= " WHERE s.nama LIKE '%$cari%' OR s.nisn LIKE '%$cari%' OR p.nama LIKE '%$cari%' OR p.kode LIKE '%$cari%'";
-}
-
-$sql_data .= " ORDER BY ps.id DESC LIMIT $halaman_awal, $batas";
+// Ambil data mentah dari database
+$sql_data = "SELECT * FROM t_pelanggaran_siswa ORDER BY id DESC";
 $query_p = mysqli_query($koneksi, $sql_data);
+
+$all_data = [];
+if ($query_p) {
+    while ($row = mysqli_fetch_assoc($query_p)) {
+        // 1. Ambil Nama Siswa & NISN
+        $nama_s = !empty($row['nama_siswa']) ? $row['nama_siswa'] : '';
+        $nisn_s = '-';
+        if (empty($nama_s) && !empty($row['siswa_id'])) {
+            $sid = $row['siswa_id'];
+            $q_s = mysqli_query($koneksi, "SELECT nama, nisn FROM t_siswa WHERE id = '$sid' LIMIT 1");
+            if ($q_s && $data_s = mysqli_fetch_assoc($q_s)) {
+                $nama_s = $data_s['nama'] ?? 'Siswa Tidak Ditemukan';
+                $nisn_s = $data_s['nisn'] ?? '-';
+            }
+        }
+        if (empty($nama_s)) $nama_s = 'Siswa Tidak Ditemukan';
+
+        // 2. Ambil Jenis Pelanggaran & Poin
+        $nama_p = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : '';
+        $poin_p = $row['poin'] ?? 0;
+        $kode_p = '-';
+
+        $kid = !empty($row['pelanggaran_kategori_id']) ? $row['pelanggaran_kategori_id'] : (!empty($row['pelanggaran_id']) ? $row['pelanggaran_id'] : '');
+        if ((empty($nama_p) || $poin_p == 0) && !empty($kid)) {
+            $q_k = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kid' LIMIT 1");
+            if (!$q_k || mysqli_num_rows($q_k) == 0) {
+                $q_k = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran WHERE id = '$kid' LIMIT 1");
+            }
+            if ($q_k && $data_k = mysqli_fetch_assoc($q_k)) {
+                if (empty($nama_p)) {
+                    $nama_p = $data_k['nama_kategori'] ?? ($data_k['nama'] ?? 'Pelanggaran Umum');
+                }
+                if ($poin_p == 0) {
+                    $poin_p = $data_k['poin'] ?? 0;
+                }
+                $kode_p = $data_k['kode'] ?? ($data_k['id'] ?? '-');
+            }
+        }
+        if (empty($nama_p)) $nama_p = 'Pelanggaran Umum';
+
+        // Filter Pencarian
+        if (!empty($cari)) {
+            $keyword = strtolower($cari);
+            $target_search = strtolower($nama_s . ' ' . $nisn_s . ' ' . $nama_p);
+            if (strpos($target_search, $keyword) === false) {
+                continue;
+            }
+        }
+
+        $row['computed_nama_siswa'] = $nama_s;
+        $row['computed_nisn'] = $nisn_s;
+        $row['computed_nama_pelanggaran'] = $nama_p;
+        $row['computed_poin'] = $poin_p;
+        $row['computed_kode'] = $kode_p;
+        
+        $all_data[] = $row;
+    }
+}
+
+$total_data = count($all_data);
+$total_halaman = ceil($total_data / $batas);
+$paged_data = array_slice($all_data, $halaman_awal, $batas);
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -83,29 +116,31 @@ $query_p = mysqli_query($koneksi, $sql_data);
       </thead>
       <tbody>
         <?php
-        if ($query_p && mysqli_num_rows($query_p) > 0) {
+        if (!empty($paged_data)) {
           $no = $halaman_awal + 1;
-          while ($row = mysqli_fetch_assoc($query_p)) {
+          foreach ($paged_data as $row) {
             $tgl = !empty($row['tanggal']) ? date('d/m/Y', strtotime($row['tanggal'])) : '-';
         ?>
             <tr>
               <td class="fw-bold px-3 text-muted"><?= $no++; ?></td>
               <td>
-                <span class="fw-semibold text-dark"><?= htmlspecialchars($row['nama_siswa'] ?? 'Siswa Tidak Ditemukan'); ?></span>
-                <br><small class="text-muted">NISN: <?= htmlspecialchars($row['nisn'] ?? '-'); ?></small>
+                <span class="fw-semibold text-dark"><?= htmlspecialchars($row['computed_nama_siswa']); ?></span>
+                <br><small class="text-muted">NISN: <?= htmlspecialchars($row['computed_nisn']); ?></small>
               </td>
               <td>
-                <span class="fw-medium text-dark"><?= htmlspecialchars($row['nama_pelanggaran']); ?></span>
-                <br><small class="badge bg-secondary bg-opacity-10 text-dark border py-1 px-2">Kode: <?= htmlspecialchars($row['kode_pelanggaran']); ?></small>
+                <span class="fw-medium text-dark"><?= htmlspecialchars($row['computed_nama_pelanggaran']); ?></span>
+                <?php if (!empty($row['keterangan'])): ?>
+                  <br><small class="text-muted">Ket: <?= htmlspecialchars($row['keterangan']); ?></small>
+                <?php endif; ?>
               </td>
               <td class="text-center text-muted small"><?= $tgl; ?></td>
               <td class="text-center">
                 <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold">
-                  +<?= htmlspecialchars($row['poin'] ?? 0); ?> Poin
+                  +<?= htmlspecialchars($row['computed_poin']); ?> Poin
                 </span>
               </td>
               <td class="text-center">
-              <a href="pelanggaran/pelanggaran_edit.php?id=<?= $row['id']; ?>" class="btn btn-sm btn-warning text-white px-2 py-1 me-1"><i class="bi bi-pencil-square"></i></a>
+                <a href="pelanggaran/pelanggaran_edit.php?id=<?= $row['id']; ?>" class="btn btn-sm btn-warning text-white px-2 py-1 me-1"><i class="bi bi-pencil-square"></i></a>
                 <a href="pelanggaran/pelanggaran_hapus.php?id=<?= $row['id']; ?>" class="btn btn-sm btn-danger px-2 py-1" onclick="return confirm('Yakin ingin menghapus catatan pelanggaran ini?')"><i class="bi bi-trash"></i></a>
               </td>
             </tr>
