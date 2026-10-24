@@ -50,7 +50,7 @@ if ($q_guru && mysqli_num_rows($q_guru) > 0) {
 
             <div class="col-md-8 ps-md-4">
               <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">
-                <i class="bi bi-info-circle text-primary me-2"></i>Rincian Informasi Akun Guru
+                <i class="bi bi-info-circle text-black me-2"></i>Rincian Informasi Akun Guru
               </h5>
               
               <table class="table table-borderless align-middle mb-0">
@@ -71,10 +71,6 @@ if ($q_guru && mysqli_num_rows($q_guru) > 0) {
                     <td><?= htmlspecialchars($guru_data['email'] ?? $user_email); ?></td>
                   </tr>
                   <tr>
-                    <td class="text-secondary fw-semibold"><i class="bi bi-telephone me-2 text-muted"></i>Nomor Telepon</td>
-                    <td>:</td>
-                    <td><?= htmlspecialchars($guru_data['telepon'] ?? ($guru_data['no_hp'] ?? '081234567890')); ?></td>
-                  </tr>
                   <tr>
                     <td class="text-secondary fw-semibold"><i class="bi bi-shield-lock me-2 text-muted"></i>Hak Akses Sistem</td>
                     <td>:</td>
