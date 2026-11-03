@@ -8,42 +8,42 @@
 </div>
 <div class="row g-4">
   <div class="col-md-4">
-    <div class="card stat-card shadow-sm bg-white border-start border-4 border-danger p-3">
+    <div class="card stat-card shadow-sm bg-white border-0 border-start border-4 border-danger rounded-3 p-3">
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <span class="text-muted fw-medium text-uppercase small">Total Siswa</span>
           <h2 class="fw-bold mb-0 mt-1 text-dark"><?= $total_siswa; ?></h2>
         </div>
-        <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger">
-          <i class="bi bi-people fs-2"></i>
+        <div class="bg-danger bg-opacity-10 d-flex align-items-center justify-content-center rounded-circle text-danger" style="width: 50px; height: 50px;">
+          <i class="bi bi-people fs-4"></i>
         </div>
       </div>
     </div>
   </div>
 
   <div class="col-md-4">
-    <div class="card stat-card shadow-sm bg-white border-start border-4 border-warning p-3">
+    <div class="card stat-card shadow-sm bg-white border-0 border-start border-4 border-warning rounded-3 p-3">
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <span class="text-muted fw-medium text-uppercase small">Total Guru</span>
           <h2 class="fw-bold mb-0 mt-1 text-dark"><?= $total_guru; ?></h2>
         </div>
-        <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning">
-          <i class="bi bi-person-workspace fs-2"></i>
+        <div class="bg-warning bg-opacity-10 d-flex align-items-center justify-content-center rounded-circle text-warning" style="width: 50px; height: 50px;">
+          <i class="bi bi-person-workspace fs-4"></i>
         </div>
       </div>
     </div>
   </div>
 
   <div class="col-md-4">
-    <div class="card stat-card shadow-sm bg-white border-start border-4 border-success p-3">
+    <div class="card stat-card shadow-sm bg-white border-0 border-start border-4 border-success rounded-3 p-3">
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <span class="text-muted fw-medium text-uppercase small">Total Kelas</span>
           <h2 class="fw-bold mb-0 mt-1 text-dark"><?= $total_kelas; ?></h2>
         </div>
-        <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
-          <i class="bi bi-building fs-2"></i>
+        <div class="bg-success bg-opacity-10 d-flex align-items-center justify-content-center rounded-circle text-success" style="width: 50px; height: 50px;">
+          <i class="bi bi-building fs-4"></i>
         </div>
       </div>
     </div>

@@ -2,17 +2,15 @@
 session_start();
 include '../koneksi.php';
 
-if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+if (!isset($_SESSION['login']) \vert{}\vert{}$_SESSION['login'] !== true) {
     header("Location: ../login.php");
     exit();
 }
 
-$role = $_SESSION['role'];
+$role =$_SESSION['role'];
 
-if (isset($_POST['simpan'])) {
-    $nama_kelas = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $tingkat    = mysqli_real_escape_string($koneksi, $_POST['tingkat']);
-    $jurusan    = mysqli_real_escape_string($koneksi, $_POST['jurusan']);
+if (isset($_POST['simpan'])) {$nama_kelas = mysqli_real_escape_string($koneksi,$_POST['nama']);
+    $tingkat    = mysqli_real_escape_string($koneksi, $_POST['tingkat']);$jurusan    = mysqli_real_escape_string($koneksi,$_POST['jurusan']);
 
     $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_kelas");
     $r_max = mysqli_fetch_assoc($q_max);
@@ -20,7 +18,7 @@ if (isset($_POST['simpan'])) {
 
     $query = "INSERT INTO t_kelas (id, nama, tingkat, jurusan) VALUES ('$new_id', '$nama_kelas', '$tingkat', '$jurusan')";
 
-    if (mysqli_query($koneksi, $query)) {
+    if (mysqli_query($koneksi,$query)) {
         echo "<script>alert('Berhasil! Data kelas baru telah ditambahkan.'); window.location.href='../dashboard.php?tab=menu3';</script>";
         exit();
     } else {
@@ -74,11 +72,11 @@ if (isset($_POST['simpan'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri & Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 750px;">
+        <div class="container-fluid py-2 px-0">
           <form action="" method="POST">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-building-add me-2 text-warning"></i>Tambah Data Kelas Baru</h5>
               </div>

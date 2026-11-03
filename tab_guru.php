@@ -87,7 +87,7 @@ if ($action === 'tambah' && isset($_POST['simpan_guru'])) {
 }
 
 // ==========================================
-// 2. PROSES UPDATE GURU
+// 2. PROSES UPDATE GURU & PASSWORD LOGIN
 // ==========================================
 if ($action === 'edit' && isset($_POST['update_guru'])) {
     $id_edit      = mysqli_real_escape_string($koneksi, $_GET['id'] ?? '');
@@ -95,11 +95,27 @@ if ($action === 'edit' && isset($_POST['update_guru'])) {
     $nama         = mysqli_real_escape_string($koneksi, $_POST['nama'] ?? '');
     $email        = mysqli_real_escape_string($koneksi, $_POST['email'] ?? '');
     $status_aktif = $_POST['status_aktif'] ?? '1';
-    $user_id      = $_POST['user_id'] ?? '';
+    $new_password = $_POST['new_password'] ?? '';
+    
+    // Ambil user_id yang terhubung dengan guru ini
+    $q_guru_info = mysqli_query($koneksi, "SELECT user_id FROM t_guru WHERE id='$id_edit'");
+    $d_guru_info = mysqli_fetch_assoc($q_guru_info);
+    $user_id     = $d_guru_info['user_id'] ?? '';
 
-    $query_up = "UPDATE t_guru SET nip='$nip', nama='$nama', email='$email', status_aktif='$status_aktif', user_id='$user_id' WHERE id='$id_edit'";
+    // Update data guru
+    $query_up = "UPDATE t_guru SET nip='$nip', nama='$nama', email='$email', status_aktif='$status_aktif' WHERE id='$id_edit'";
+    $update_guru_res = mysqli_query($koneksi, $query_up);
 
-    if (mysqli_query($koneksi, $query_up)) {
+    // Jika admin mengisi password baru, update juga tabel t_users
+    if ($update_guru_res && !empty($user_id) && !empty($new_password)) {
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        mysqli_query($koneksi, "UPDATE t_users SET password='$hashed_password', email='$email', nama='$nama' WHERE id='$user_id'");
+    } elseif ($update_guru_res && !empty($user_id)) {
+        // Update email/nama di t_users agar tetap sinkron
+        mysqli_query($koneksi, "UPDATE t_users SET email='$email', nama='$nama' WHERE id='$user_id'");
+    }
+
+    if ($update_guru_res) {
         echo "<script>alert('Data guru berhasil diperbarui!'); window.location.href='dashboard.php?tab=menu2';</script>";
         exit();
     } else {
@@ -111,11 +127,11 @@ if ($action === 'edit' && isset($_POST['update_guru'])) {
 ?>
 
 <!-- TAMPILAN ANTARMUKA -->
-<div class="container-fluid py-2">
+<div class="container-fluid py-2 px-0">
   <?php if ($action === 'tambah'): ?>
-    <!-- FORM TAMBAH GURU -->
-    <div class="row justify-content-center">
-      <div class="col-lg-9">
+    <!-- FORM TAMBAH GURU (Memenuhi Layar / Rata Kiri) -->
+    <div class="row">
+      <div class="col-12">
         <form action="dashboard.php?tab=menu2&action=tambah" method="POST">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
@@ -168,13 +184,13 @@ if ($action === 'edit' && isset($_POST['update_guru'])) {
       $q_data = mysqli_query($koneksi, "SELECT * FROM t_guru WHERE id = '$id_edit'");
       $data_edit = mysqli_fetch_assoc($q_data);
   ?>
-    <!-- FORM EDIT GURU -->
-    <div class="row justify-content-center">
-      <div class="col-lg-9">
+    <!-- FORM EDIT GURU & PASSWORD (Memenuhi Layar / Rata Kiri) -->
+    <div class="row">
+      <div class="col-12">
         <form action="dashboard.php?tab=menu2&action=edit&id=<?= $id_edit; ?>" method="POST">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
-              <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Data Guru</h5>
+              <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Data Guru & Password Login</h5>
             </div>
             <div class="card-body p-4 bg-white">
               <div class="row g-3 mb-3">
@@ -203,17 +219,9 @@ if ($action === 'edit' && isset($_POST['update_guru'])) {
               </div>
 
               <div class="mb-4">
-                <label class="form-label fw-bold">Akun User Terhubung (t_users)</label>
-                <select name="user_id" class="form-select">
-                  <?php
-                  $q_u = mysqli_query($koneksi, "SELECT * FROM t_users");
-                  while ($u = mysqli_fetch_assoc($q_u)) {
-                      $selected = ($u['id'] == ($data_edit['user_id'] ?? '')) ? 'selected' : '';
-                      $uname = $u['nama'] ?? ($u['username'] ?? 'User');
-                      echo "<option value='{$u['id']}' {$selected}>ID: {$u['id']} - {$uname} ({$u['email']})</option>";
-                  }
-                  ?>
-                </select>
+                <label class="form-label fw-bold">Ubah Password Login (Opsional)</label>
+                <input type="password" name="new_password" class="form-control" placeholder="Kosongkan jika tidak ingin mengubah password akun guru ini">
+                <small class="text-muted">*Masukkan password baru jika guru ingin mengganti password sandi loginnya.</small>
               </div>
 
               <div class="pt-3 border-top d-flex gap-2 justify-content-end">
