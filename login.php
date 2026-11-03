@@ -4,65 +4,66 @@ include 'koneksi.php';
 
 // Jika sudah login, langsung lempar ke dashboard
 if (isset($_SESSION['login']) && $_SESSION['login'] === true) {
-    header("Location: dashboard.php");
-    exit();
+  header("Location: dashboard.php");
+  exit();
 }
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+  $email = trim($_POST['email'] ?? '');
+  $password = $_POST['password'] ?? '';
 
-    // 1. Cek akun bawaan sistem terlebih dahulu (Hardcoded)
-    if ($email === 'guru@sekolah.sch.id' && $password === 'guru123') {
-        $_SESSION['login'] = true;
-        $_SESSION['role'] = 'Guru';
-        $_SESSION['nama'] = 'Budi Santoso, S.Pd.';
-        $_SESSION['email'] = $email;
-        header("Location: dashboard.php");
-        exit();
-    } elseif ($email === 'admin@sekolah.sch.id' && $password === 'admin123') {
-        $_SESSION['login'] = true;
-        $_SESSION['role'] = 'Admin';
-        $_SESSION['nama'] = 'Administrator';
-        $_SESSION['email'] = $email;
-        header("Location: dashboard.php");
-        exit();
+  // 1. Cek akun bawaan sistem terlebih dahulu (Hardcoded)
+  if ($email === 'guru@sekolah.sch.id' && $password === 'guru123') {
+    $_SESSION['login'] = true;
+    $_SESSION['role'] = 'Guru';
+    $_SESSION['nama'] = 'Budi Santoso, S.Pd.';
+    $_SESSION['email'] = $email;
+    header("Location: dashboard.php");
+    exit();
+  } elseif ($email === 'admin@sekolah.sch.id' && $password === 'admin123') {
+    $_SESSION['login'] = true;
+    $_SESSION['role'] = 'Admin';
+    $_SESSION['nama'] = 'Administrator';
+    $_SESSION['email'] = $email;
+    header("Location: dashboard.php");
+    exit();
+  } else {
+    // 2. Jika bukan akun bawaan, cek ke database tabel t_users
+    $email_esc = mysqli_real_escape_string($koneksi, $email);
+    $query = mysqli_query($koneksi, "SELECT * FROM t_users WHERE email = '$email_esc' OR nama = '$email_esc'");
+
+    if ($query && mysqli_num_rows($query) > 0) {
+      $user = mysqli_fetch_assoc($query);
+
+      // TEST SEMENTARA: Kita matikan dulu verifikasi hash yang ketat supaya pasti bisa masuk
+      // (Nanti bisa kita rapikan lagi setelah berhasil login)
+      $_SESSION['login'] = true;
+      $_SESSION['role'] = ucfirst(strtolower($user['role']));
+      $_SESSION['nama'] = $user['nama'];
+      $_SESSION['email'] = $user['email'];
+
+      header("Location: dashboard.php");
+      exit();
     } else {
-      // 2. Jika bukan akun bawaan, cek ke database tabel t_users
-        $email_esc = mysqli_real_escape_string($koneksi, $email);
-        $query = mysqli_query($koneksi, "SELECT * FROM t_users WHERE email = '$email_esc' OR nama = '$email_esc'");
-        
-        if ($query && mysqli_num_rows($query) > 0) {
-            $user = mysqli_fetch_assoc($query);
-
-            // TEST SEMENTARA: Kita matikan dulu verifikasi hash yang ketat supaya pasti bisa masuk
-            // (Nanti bisa kita rapikan lagi setelah berhasil login)
-            $_SESSION['login'] = true;
-            $_SESSION['role'] = ucfirst(strtolower($user['role'])); 
-            $_SESSION['nama'] = $user['nama'];
-            $_SESSION['email'] = $user['email'];
-            
-            header("Location: dashboard.php");
-            exit();
-            
-        } else {
-            // Ini akan memunculkan alert jika email/nama tidak ditemukan sama sekali di tabel t_users
-            echo "<script>alert('Email/Nama tidak ditemukan di database t_users!');</script>";
-            $error = 'Email atau password salah!';
-        }
+      // Ini akan memunculkan alert jika email/nama tidak ditemukan sama sekali di tabel t_users
+      echo "<script>alert('Email/Nama tidak ditemukan di database t_users!');</script>";
+      $error = 'Email atau password salah!';
     }
+  }
 }
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Sistem Informasi UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
 
   <div class="container mt-5" style="max-width: 500px;">
@@ -97,11 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <ul class="small mb-0 ps-3">
           <li><strong>Admin Bawaan:</strong> <code>admin@sekolah.sch.id</code> | Password: <code>admin123</code></li>
           <li><strong>Guru Bawaan:</strong> <code>guru@sekolah.sch.id</code> | Password: <code>guru123</code></li>
-          <li><strong>Akun Baru (Adi):</strong> <code>adi@gmail.com</code> | Password: <code>guru123</code></li>
         </ul>
       </fieldset>
     </main>
   </div>
 
 </body>
+
 </html>
