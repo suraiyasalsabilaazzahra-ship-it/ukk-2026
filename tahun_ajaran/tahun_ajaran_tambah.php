@@ -13,13 +13,19 @@ if (isset($_POST['simpan'])) {
     $nama            = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $tanggal_mulai   = mysqli_real_escape_string($koneksi, $_POST['tanggal_mulai']);
     $tanggal_selesai = mysqli_real_escape_string($koneksi, $_POST['tanggal_selesai']);
+    $status          = mysqli_real_escape_string($koneksi, $_POST['status']);
+
+    // Jika status yang dipilih 'Aktif', ubah semua tahun ajaran lain menjadi 'Tidak Aktif'
+    if ($status === 'Aktif') {
+        mysqli_query($koneksi, "UPDATE t_tahun_ajaran SET status = 'Tidak Aktif'");
+    }
 
     $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_tahun_ajaran");
     $r_max = mysqli_fetch_assoc($q_max);
     $new_id = ($r_max['max_id'] ?? 0) + 1;
 
-    $query = "INSERT INTO t_tahun_ajaran (id, nama, tanggal_mulai, tanggal_selesai) 
-              VALUES ('$new_id', '$nama', '$tanggal_mulai', '$tanggal_selesai')";
+    $query = "INSERT INTO t_tahun_ajaran (id, nama, tanggal_mulai, tanggal_selesai, status) 
+              VALUES ('$new_id', '$nama', '$tanggal_mulai', '$tanggal_selesai', '$status')";
 
     if (mysqli_query($koneksi, $query)) {
         echo "<script>alert('Berhasil! Data tahun ajaran baru telah ditambahkan.'); window.location.href='../dashboard.php?tab=menu5';</script>";
@@ -75,11 +81,11 @@ if (isset($_POST['simpan'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 750px;">
+        <div class="container-fluid px-0">
           <form action="" method="POST">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-plus me-2 text-warning"></i>Tambah Data Tahun Ajaran Baru</h5>
               </div>
@@ -98,9 +104,17 @@ if (isset($_POST['simpan'])) {
                   <label class="form-label fw-bold">Tanggal Mulai</label>
                   <input type="date" name="tanggal_mulai" class="form-control" required>
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                   <label class="form-label fw-bold">Tanggal Selesai</label>
                   <input type="date" name="tanggal_selesai" class="form-control" required>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Status Tahun Ajaran</label>
+                  <select name="status" class="form-select" required>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Tidak Aktif" selected>Tidak Aktif</option>
+                  </select>
+                  <small class="text-muted">*Jika memilih Aktif, tahun ajaran lain akan otomatis menjadi Tidak Aktif.</small>
                 </div>
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
                   <a href="../dashboard.php?tab=menu5" class="btn btn-secondary px-4">Batal</a>

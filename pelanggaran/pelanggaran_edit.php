@@ -7,57 +7,39 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     exit();
 }
 
-// Pastikan mengambil id dengan aman
-// Ubah dari empty($id) menjadi pengecekan string kosong biasa
-$id = isset($_GET['id']) ? $_GET['id'] : '';
-if ($id === '') {
+$id = isset($_GET['id']) ? mysqli_real_escape_string($koneksi, $_GET['id']) : '';
+if (empty($id)) {
     echo "<script>alert('ID Pelanggaran tidak valid!'); window.location.href='../dashboard.php?tab=menu9';</script>";
     exit();
 }
 
-$id = mysqli_real_escape_string($koneksi, $id);
 $q_current = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_siswa WHERE id = '$id'");
 $current = mysqli_fetch_assoc($q_current);
 
 if (!$current) {
-    echo "<script>alert('Data pelanggaran tidak ditemukan di database!'); window.location.href='../dashboard.php?tab=menu9';</script>";
+    echo "<script>alert('Data pelanggaran tidak ditemukan!'); window.location.href='../dashboard.php?tab=menu9';</script>";
     exit();
 }
 
 $error = "";
 
 if (isset($_POST['update'])) {
-    $siswa_id       = $_POST['siswa_id'] ?? '';
-    $pelanggaran_id = $_POST['pelanggaran_id'] ?? '';
-    $tanggal        = $_POST['tanggal'] ?? '';
-    $poin           = $_POST['poin'] ?? 0;
-    $keterangan     = $_POST['keterangan'] ?? '';
+    $siswa_id    = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
+    $kategori_id = mysqli_real_escape_string($koneksi, $_POST['kategori_id'] ?? '');
+    $tanggal     = mysqli_real_escape_string($koneksi, $_POST['tanggal'] ?? '');
+    $keterangan  = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
 
-    if (!empty($siswa_id) && !empty($pelanggaran_id) && !empty($tanggal)) {
-        // Ambil nama siswa dan nama pelanggaran otomatis agar sinkron
-        $q_s = mysqli_query($koneksi, "SELECT nama FROM t_siswa WHERE id = '$siswa_id'");
-        $d_s = mysqli_fetch_assoc($q_s);
-        $nama_siswa = $d_s['nama'] ?? '';
-
-        $q_p = mysqli_query($koneksi, "SELECT nama FROM t_pelanggaran WHERE id = '$pelanggaran_id'");
-        $d_p = mysqli_fetch_assoc($q_p);
-        $nama_pelanggaran = $d_p['nama'] ?? '';
-
-        $siswa_id         = mysqli_real_escape_string($koneksi, $siswa_id);
-        $pelanggaran_id   = mysqli_real_escape_string($koneksi, $pelanggaran_id);
-        $nama_siswa       = mysqli_real_escape_string($koneksi, $nama_siswa);
-        $nama_pelanggaran = mysqli_real_escape_string($koneksi, $nama_pelanggaran);
-        $tanggal          = mysqli_real_escape_string($koneksi, $tanggal);
-        $poin             = mysqli_real_escape_string($koneksi, $poin);
-        $keterangan       = mysqli_real_escape_string($koneksi, $keterangan);
+    if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal)) {
+        // Ambil poin otomatis terbaru
+        $q_get_poin = mysqli_query($koneksi, "SELECT poin FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
+        $d_poin = mysqli_fetch_assoc($q_get_poin);
+        $poin_val = $d_poin['poin'] ?? 0;
 
         $query = "UPDATE t_pelanggaran_siswa 
                   SET siswa_id = '$siswa_id', 
-                      nama_siswa = '$nama_siswa', 
-                      pelanggaran_id = '$pelanggaran_id', 
-                      nama_pelanggaran = '$nama_pelanggaran', 
+                      pelanggaran_kategori_id = '$kategori_id', 
+                      poin = '$poin_val', 
                       tanggal = '$tanggal', 
-                      poin = '$poin', 
                       keterangan = '$keterangan' 
                   WHERE id = '$id'";
                   
@@ -73,7 +55,7 @@ if (isset($_POST['update'])) {
             $error = "Gagal memperbarui data: " . mysqli_error($koneksi);
         }
     } else {
-        $error = "Kolom Siswa, Jenis Pelanggaran, dan Tanggal wajib diisi!";
+        $error = "Kolom Siswa, Kategori Pelanggaran, dan Tanggal wajib diisi!";
     }
 }
 ?>
@@ -85,82 +67,119 @@ if (isset($_POST['update'])) {
   <title>Edit Pelanggaran Siswa - UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
-    .card-form { background: #fff; border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .btn-maroon { background-color: #1b263b; color: #fff; border: none; }
-    .btn-maroon:hover { background-color: #0d1b2a; color: #fff; }
+    .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
+    .sidebar .nav-link-custom { color: rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .sidebar .nav-link-custom:hover { color: #ffc107; background-color: rgba(255, 193, 7, 0.15); }
+    main { margin-left: 250px; }
   </style>
 </head>
 <body>
-  <div class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card card-form p-4">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Edit Pelanggaran</h4>
-            <a href="../dashboard.php?tab=menu9" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
-          </div>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- SIDEBAR -->
+      <div class="col-md-3 col-lg-2 sidebar p-3 text-white">
+        <div class="d-flex align-items-center gap-2 mb-2 px-2 mt-2">
+          <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
+          <h4 class="mb-0 fw-bold fs-5">UKK System</h4>
+        </div>
+        <div class="px-2 mb-3">
+          <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-semibold"><i class="bi bi-person-check-fill me-1"></i>Admin</span>
+        </div>
+        <hr class="text-white-50">
+        <ul class="nav flex-column mb-auto">
+          <li class="nav-item"><a href="../dashboard.php?tab=menu1" class="nav-link-custom"><i class="bi bi-speedometer2 fs-5"></i><span>Dashboard</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu2" class="nav-link-custom"><i class="bi bi-person-workspace fs-5"></i><span>Data Guru</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu3" class="nav-link-custom"><i class="bi bi-door-closed fs-5"></i><span>Data Kelas</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu4" class="nav-link-custom"><i class="bi bi-people fs-5"></i><span>Data Siswa</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu5" class="nav-link-custom"><i class="bi bi-calendar-event fs-5"></i><span>Tahun Ajaran</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu6" class="nav-link-custom"><i class="bi bi-diagram-3 fs-5"></i><span>Penempatan Siswa</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu7" class="nav-link-custom"><i class="bi bi-tags fs-5"></i><span>Kategori Pelanggaran</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu8" class="nav-link-custom"><i class="bi bi-person-bounding-box fs-5"></i><span>Data Wali Kelas</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu9" class="nav-link-custom" style="background-color: #ffc107; color: #0d1b2a; font-weight: 700;"><i class="bi bi-exclamation-triangle fs-5"></i><span>Pencatatan Pelanggaran</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu10" class="nav-link-custom"><i class="bi bi-file-earmark-text fs-5"></i><span>Laporan Pelanggaran</span></a></li>
+          <li class="nav-item"><a href="../dashboard.php?tab=menu_about" class="nav-link-custom"><i class="bi bi-person-circle fs-5"></i><span>About Me</span></a></li>
+          <li class="nav-item mt-4"><a href="../logout.php" class="nav-link-custom text-warning fw-bold bg-transparent border border-warning"><i class="bi bi-box-arrow-right fs-5"></i><span>Logout</span></a></li>
+        </ul>
+      </div>
 
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
+      <main class="col-md-9 col-lg-10 p-4 ms-auto">
+        <div class="container-fluid px-0">
           <?php if (!empty($error)): ?>
-            <div class="alert alert-danger py-2 mb-3">
-              <i class="bi bi-exclamation-octagon-fill me-1"></i> <?= $error; ?>
-            </div>
+            <div class="alert alert-danger py-2 mb-3"><?= $error; ?></div>
           <?php endif; ?>
 
           <form action="" method="POST">
-            <div class="mb-3">
-              <label class="form-label fw-semibold small">Pilih Siswa</label>
-              <select name="siswa_id" class="form-select" required>
-                <option value="">-- Pilih Siswa --</option>
-                <?php
-                $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
-                while ($s = mysqli_fetch_assoc($q_s)) {
-                    $selected = ($s['id'] == $current['siswa_id']) ? 'selected' : '';
-                    echo "<option value='{$s['id']}' {$selected}>{$s['nama']} (NISN: {$s['nisn']})</option>";
-                }
-                ?>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-semibold small">Pilih Jenis Pelanggaran</label>
-              <select name="pelanggaran_id" class="form-select" required>
-                <option value="">-- Pilih Pelanggaran --</option>
-                <?php
-                $q_p = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran ORDER BY nama ASC");
-                while ($p = mysqli_fetch_assoc($q_p)) {
-                    $nm_pelanggaran = $p['nama'] ?? 'Pelanggaran';
-                    $poin_default   = $p['poin'] ?? 0;
-                    $selected = ($p['id'] == $current['pelanggaran_id']) ? 'selected' : '';
-                    echo "<option value='{$p['id']}' {$selected}>[{$p['kode']}] {$nm_pelanggaran} ({$poin_default} Poin)</option>";
-                }
-                ?>
-              </select>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold small">Tanggal Kejadian</label>
-                <input type="date" name="tanggal" class="form-control" value="<?= htmlspecialchars($current['tanggal']); ?>" required>
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
+              <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Edit Catatan Pelanggaran</h5>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold small">Jumlah Poin</label>
-                <input type="number" name="poin" class="form-control" value="<?= htmlspecialchars($current['poin']); ?>" required>
+              <div class="card-body p-4 bg-white">
+                
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Pilih Siswa</label>
+                  <select name="siswa_id" class="form-select py-2" required>
+                    <option value="">-- Pilih Siswa --</option>
+                    <?php
+                    $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
+                    while ($s = mysqli_fetch_assoc($q_s)) {
+                        $selected = ($s['id'] == $current['siswa_id']) ? 'selected' : '';
+                        echo "<option value='{$s['id']}' {$selected}>{$s['nama']} (Kelas: " . htmlspecialchars($s['kelas'] ?? '-') . ")</option>";
+                    }
+                    ?>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Kategori Pelanggaran (Poin Otomatis)</label>
+                  <select name="kategori_id" id="pilihKategori" class="form-select py-2" required onchange="updatePoinInfo(this)">
+                    <option value="">-- Pilih Pelanggaran --</option>
+                    <?php
+                    $q_p = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori ORDER BY id DESC");
+                    while ($p = mysqli_fetch_assoc($q_p)) {
+                        $p_id = $p['id'];
+                        $nm_p = !empty($p['nama']) ? $p['nama'] : ($p['nama_kategori'] ?? 'Pelanggaran');
+                        $poin_p = $p['poin'] ?? 0;
+                        $selected = ($p_id == $current['pelanggaran_kategori_id']) ? 'selected' : '';
+                        echo "<option value='{$p_id}' data-poin='{$poin_p}' {$selected}>{$nm_p} (+{$poin_p} Poin)</option>";
+                    }
+                    ?>
+                  </select>
+                  <small class="text-muted mt-1 d-block">Poin otomatis: <span id="infoPoin" class="fw-bold text-danger"><?= htmlspecialchars($current['poin'] ?? 0); ?> Poin</span></small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Tanggal Kejadian</label>
+                  <input type="date" name="tanggal" class="form-control py-2" value="<?= htmlspecialchars($current['tanggal']); ?>" required>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Keterangan Tambahan</label>
+                  <textarea name="keterangan" class="form-control" rows="3"><?= htmlspecialchars($current['keterangan'] ?? ''); ?></textarea>
+                </div>
+
+                <div class="pt-3 border-top d-flex gap-2 justify-content-end">
+                  <a href="../dashboard.php?tab=menu9" class="btn btn-secondary px-4 fw-bold">Batal</a>
+                  <button type="submit" name="update" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Perbarui Pelanggaran</button>
+                </div>
+
               </div>
             </div>
-
-            <div class="mb-4">
-              <label class="form-label fw-semibold small">Keterangan Tambahan</label>
-              <textarea name="keterangan" class="form-control" rows="3"><?= htmlspecialchars($current['keterangan'] ?? ''); ?></textarea>
-            </div>
-
-            <button type="submit" name="update" class="btn btn-maroon w-100 py-2 fw-semibold rounded-pill mt-3">Perbarui Pelanggaran</button>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   </div>
+
+  <script>
+    function updatePoinInfo(selectObj) {
+      let selectedOption = selectObj.options[selectObj.selectedIndex];
+      let poin = selectedOption.getAttribute('data-poin') || 0;
+      document.getElementById('infoPoin').innerText = poin + ' Poin';
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

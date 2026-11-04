@@ -27,8 +27,14 @@ if (isset($_POST['update'])) {
     $nama            = mysqli_real_escape_string($koneksi, $_POST['nama']);
     $tanggal_mulai   = mysqli_real_escape_string($koneksi, $_POST['tanggal_mulai']);
     $tanggal_selesai = mysqli_real_escape_string($koneksi, $_POST['tanggal_selesai']);
+    $status          = mysqli_real_escape_string($koneksi, $_POST['status']);
 
-    $query = "UPDATE t_tahun_ajaran SET nama = '$nama', tanggal_mulai = '$tanggal_mulai', tanggal_selesai = '$tanggal_selesai' WHERE id = '$id'";
+    // Jika status diubah jadi 'Aktif', nonaktifkan yang lain
+    if ($status === 'Aktif') {
+        mysqli_query($koneksi, "UPDATE t_tahun_ajaran SET status = 'Tidak Aktif'");
+    }
+
+    $query = "UPDATE t_tahun_ajaran SET nama = '$nama', tanggal_mulai = '$tanggal_mulai', tanggal_selesai = '$tanggal_selesai', status = '$status' WHERE id = '$id'";
 
     if (mysqli_query($koneksi, $query)) {
         echo "<script>alert('Data tahun ajaran berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu5';</script>";
@@ -84,11 +90,11 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 750px;">
+        <div class="container-fluid px-0">
           <form action="" method="POST">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2 text-warning"></i>Edit Data Tahun Ajaran</h5>
               </div>
@@ -107,9 +113,16 @@ if (isset($_POST['update'])) {
                   <label class="form-label fw-bold">Tanggal Mulai</label>
                   <input type="date" name="tanggal_mulai" class="form-control" value="<?= htmlspecialchars($data['tanggal_mulai'] ?? ''); ?>" required>
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                   <label class="form-label fw-bold">Tanggal Selesai</label>
                   <input type="date" name="tanggal_selesai" class="form-control" value="<?= htmlspecialchars($data['tanggal_selesai'] ?? ''); ?>" required>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Status Tahun Ajaran</label>
+                  <select name="status" class="form-select" required>
+                    <option value="Aktif" <?= (($data['status'] ?? '') == 'Aktif') ? 'selected' : ''; ?>>Aktif</option>
+                    <option value="Tidak Aktif" <?= (($data['status'] ?? '') == 'Tidak Aktif') ? 'selected' : ''; ?>>Tidak Aktif</option>
+                  </select>
                 </div>
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
                   <a href="../dashboard.php?tab=menu5" class="btn btn-secondary px-4">Batal</a>

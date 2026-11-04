@@ -110,10 +110,10 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 750px;">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <div class="container-fluid px-0">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
                 <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold"><i class="bi bi-person-bounding-box me-2 text-warning"></i>Edit Wali Kelas</h5>
@@ -171,7 +171,7 @@ if (isset($_POST['update'])) {
                             <select name="tahun_ajaran_id" class="form-select" required>
                                 <option value="">-- Pilih Tahun Ajaran --</option>
                                 <?php
-                                $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE nama IN ('2025/2026', '2026/2027', '2027/2028', '2028/2029') GROUP BY nama ORDER BY nama ASC");
+                                $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY nama DESC");
                                 while ($ta = mysqli_fetch_assoc($q_ta)) {
                                     $selected = ($ta['id'] == $current['tahun_ajaran_id']) ? 'selected' : '';
                                     echo "<option value='{$ta['id']}' {$selected}>{$ta['nama']}</option>";

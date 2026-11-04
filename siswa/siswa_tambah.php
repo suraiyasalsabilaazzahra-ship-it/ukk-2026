@@ -96,15 +96,15 @@ if (isset($_POST['simpan'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 850px;">
+        <div class="container-fluid px-0">
           <?php if (!empty($error)): ?>
             <div class="alert alert-danger mb-3"><?= $error; ?></div>
           <?php endif; ?>
           
           <form action="" method="POST">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus-fill me-2 text-warning"></i>Tambah Data Siswa Baru</h5>
               </div>

@@ -2,7 +2,7 @@
 session_start();
 include '../koneksi.php';
 
-if (!isset($_SESSION['login']) \vert{}\vert{}$_SESSION['login'] !== true) {
+if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     header("Location: ../login.php");
     exit();
 }

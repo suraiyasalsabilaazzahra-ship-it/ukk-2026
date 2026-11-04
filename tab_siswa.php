@@ -11,7 +11,7 @@ $cari = isset($_GET['cari_siswa']) ? mysqli_real_escape_string($koneksi, $_GET['
 
 // 4. Hitung total seluruh data siswa
 if (!empty($cari)) {
-    $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR kelas LIKE '%$cari%'");
+    $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR nis LIKE '%$cari%' OR kelas LIKE '%$cari%' OR jurusan LIKE '%$cari%'");
 } else {
     $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa");
 }
@@ -68,12 +68,11 @@ $total_halaman = ceil($total_data / $batas);
       </thead>
       <tbody>
         <?php
-        if (!empty($cari)) {
-            $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR kelas LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
-        } else {
-            $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY id DESC LIMIT $halaman_awal, $batas");
-        }
-
+      if (!empty($cari)) {
+    $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR nis LIKE '%$cari%' OR kelas LIKE '%$cari%' OR jurusan LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
+} else {
+    $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY id DESC LIMIT $halaman_awal, $batas");
+}
         if ($q_sis && mysqli_num_rows($q_sis) > 0) {
             $no = $halaman_awal + 1;
             while ($s = mysqli_fetch_assoc($q_sis)) {

@@ -9,9 +9,9 @@ $halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
 // 3. Ambil kata kunci pencarian jika ada
 $cari = isset($_GET['cari_kategori']) ? mysqli_real_escape_string($koneksi, $_GET['cari_kategori']) : '';
 
-// 4. Hitung total seluruh data untuk menentukan jumlah tombol halaman
+// 4. Hitung total seluruh data dengan kolom 'nama'
 if (!empty($cari)) {
-  $query_total = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama_kategori LIKE '%$cari%' OR deskripsi LIKE '%$cari%'");
+  $query_total = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama LIKE '%$cari%' OR deskripsi LIKE '%$cari%'");
 } else {
   $query_total = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori");
 }
@@ -21,7 +21,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
 
 // 5. Query data dengan limit paginasi dan pencarian
 if (!empty($cari)) {
-  $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama_kategori LIKE '%$cari%' OR deskripsi LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
+  $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE nama LIKE '%$cari%' OR deskripsi LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
 } else {
   $query_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori ORDER BY id DESC LIMIT $halaman_awal, $batas");
 }
@@ -45,7 +45,7 @@ if (!empty($cari)) {
         <div class="p-2 border rounded-3 bg-light">
           <span class="badge bg-warning text-dark mb-1 px-2 py-1">SEDANG</span>
           <p class="mb-0 small fw-bold text-muted">Poin: 20 s.d. 50</p>
-          <small class="text-secondary" style="font-size: 11px;">Contoh: Membolos, merusak fasilitas ringan</small>
+          <small class="text-secondary" style="font-size: 11px;">Contoh: Membolos, membuat keributan saat KBM</small>
         </div>
       </div>
       <div class="col-md-4">
@@ -61,9 +61,11 @@ if (!empty($cari)) {
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h4 class="fw-bold text-dark mb-0"><i class="bi bi-tags text-warning me-2"></i>Kategori Pelanggaran</h4>
-  <a href="kategori/kategori_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
-    <i class="bi bi-plus-lg me-1"></i>Tambah Kategori
-  </a>
+  <?php if ($role !== 'Guru'): ?>
+    <a href="kategori/kategori_tambah.php" class="btn btn-sm px-3 rounded-pill fw-semibold text-white" style="background-color: #1b263b; border-color: #1b263b;">
+      <i class="bi bi-plus-lg me-1"></i>Tambah Kategori
+    </a>
+  <?php endif; ?>
 </div>
 
 <!-- KOTAK PENCARIAN -->
@@ -122,7 +124,7 @@ if (!empty($cari)) {
         ?>
             <tr>
               <td class="fw-bold px-3 text-muted"><?= $no++; ?></td>
-              <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama_kategori'] ?? ''); ?></td>
+              <td class="fw-semibold text-dark"><?= htmlspecialchars($row['nama'] ?? ''); ?></td>
               <td class="text-center fw-bold text-primary"><?= $poin; ?></td>
               <td class="text-muted small"><?= htmlspecialchars($row['deskripsi'] ?? '-'); ?></td>
               <td class="text-center">

@@ -9,9 +9,13 @@ $halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
 // 3. Ambil kata kunci pencarian jika ada
 $cari = isset($_GET['cari_penempatan']) ? mysqli_real_escape_string($koneksi, $_GET['cari_penempatan']) : '';
 
-// 4. Hitung total seluruh data penempatan siswa
+// 4. Hitung total seluruh data penempatan siswa dengan join tabel agar bisa dicari berdasarkan nama/kelas
 if (!empty($cari)) {
-    $query_total = mysqli_query($koneksi, "SELECT * FROM t_kelas_siswa WHERE id LIKE '%$cari%' OR status_aktif LIKE '%$cari%'");
+    $query_total = mysqli_query($koneksi, "SELECT ks.* FROM t_kelas_siswa ks 
+        JOIN t_siswa s ON ks.siswa_id = s.id 
+        JOIN t_tahun_ajaran ta ON ks.tahun_ajaran_id = ta.id 
+        JOIN t_kelas k ON ks.kelas_id = k.id 
+        WHERE s.nama LIKE '%$cari%' OR ta.nama LIKE '%$cari%' OR k.nama LIKE '%$cari%'");
 } else {
     $query_total = mysqli_query($koneksi, "SELECT * FROM t_kelas_siswa");
 }
@@ -39,7 +43,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
         <div class="col-md-10">
           <div class="input-group">
             <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" name="cari_penempatan" class="form-control border-start-0 ps-0" placeholder="Cari berdasarkan ID atau status..." value="<?= htmlspecialchars($cari); ?>">
+            <input type="text" name="cari_penempatan" class="form-control border-start-0 ps-0" placeholder="Cari nama siswa, tahun ajaran, atau kelas..." value="<?= htmlspecialchars($cari); ?>">
           </div>
         </div>
         <div class="col-md-2 d-flex gap-2">
@@ -53,24 +57,35 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
   </div>
 
   <div class="table-responsive rounded-3 overflow-hidden">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0 align-middle">
       <thead style="background-color: #1b263b; color: white;">
         <tr>
-          <th width="8%">NO</th>
-          <th>SISWA ID</th>
-          <th>TAHUN AJARAN ID</th>
-          <th>KELAS ID</th>
+          <th width="6%" class="text-center">NO</th>
+          <th>NAMA SISWA</th>
+          <th>TAHUN AJARAN</th>
+          <th>KELAS</th>
           <th class="text-center">STATUS</th>
           <th class="text-center" width="15%">AKSI</th>
         </tr>
       </thead>
       <tbody>
         <?php
-        // 5. Query data dengan LIMIT
+        // 5. Query data dengan JOIN agar menampilkan nama, bukan ID angka
         if (!empty($cari)) {
-            $q_ps = mysqli_query($koneksi, "SELECT * FROM t_kelas_siswa WHERE id LIKE '%$cari%' OR status_aktif LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
+            $q_ps = mysqli_query($koneksi, "SELECT ks.*, s.nama AS nama_siswa, ta.nama AS nama_ta, k.nama AS nama_kelas 
+                FROM t_kelas_siswa ks 
+                JOIN t_siswa s ON ks.siswa_id = s.id 
+                JOIN t_tahun_ajaran ta ON ks.tahun_ajaran_id = ta.id 
+                JOIN t_kelas k ON ks.kelas_id = k.id 
+                WHERE s.nama LIKE '%$cari%' OR ta.nama LIKE '%$cari%' OR k.nama LIKE '%$cari%' 
+                ORDER BY ks.id DESC LIMIT $halaman_awal, $batas");
         } else {
-            $q_ps = mysqli_query($koneksi, "SELECT * FROM t_kelas_siswa ORDER BY id DESC LIMIT $halaman_awal, $batas");
+            $q_ps = mysqli_query($koneksi, "SELECT ks.*, s.nama AS nama_siswa, ta.nama AS nama_ta, k.nama AS nama_kelas 
+                FROM t_kelas_siswa ks 
+                JOIN t_siswa s ON ks.siswa_id = s.id 
+                JOIN t_tahun_ajaran ta ON ks.tahun_ajaran_id = ta.id 
+                JOIN t_kelas k ON ks.kelas_id = k.id 
+                ORDER BY ks.id DESC LIMIT $halaman_awal, $batas");
         }
 
         if ($q_ps && mysqli_num_rows($q_ps) > 0) {
@@ -78,10 +93,10 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
             while ($ps = mysqli_fetch_assoc($q_ps)) {
                 $st = ($ps['status_aktif'] == 1) ? '<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Aktif</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1">Non-Aktif</span>';
                 echo "<tr>
-                        <td class='fw-bold text-muted'>{$no}</td>
-                        <td>{$ps['siswa_id']}</td>
-                        <td>{$ps['tahun_ajaran_id']}</td>
-                        <td>{$ps['kelas_id']}</td>
+                        <td class='text-center fw-bold text-muted'>{$no}</td>
+                        <td class='fw-semibold text-dark'>{$ps['nama_siswa']}</td>
+                        <td>{$ps['nama_ta']}</td>
+                        <td><span class='badge bg-light text-dark border'>{$ps['nama_kelas']}</span></td>
                         <td class='text-center'>{$st}</td>
                         <td class='text-center'>
                           <a href='penempatan/penempatan_edit.php?id={$ps['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>

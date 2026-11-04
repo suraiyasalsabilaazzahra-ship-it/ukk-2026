@@ -28,7 +28,6 @@ if (isset($_POST['update'])) {
     $poin          = (int)$_POST['poin'];
     $deskripsi     = mysqli_real_escape_string($koneksi, $_POST['deskripsi']);
 
-    // Sesuaikan kolom 'nama' dan 'poin' sesuai struktur database Anda
     $query = "UPDATE t_pelanggaran_kategori SET nama = '$nama_kategori', poin = '$poin', deskripsi = '$deskripsi' WHERE id = '$id'";
 
     if (mysqli_query($koneksi, $query)) {
@@ -84,28 +83,61 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 700px;">
+        <div class="container-fluid px-0">
           <form action="" method="POST">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Kategori Pelanggaran</h5>
               </div>
               <div class="card-body p-4 bg-white">
+                
+                <!-- PILIHAN CEPAT (PRESET PELANGGARAN) -->
+                <div class="mb-3 p-3 bg-light rounded-3 border">
+                  <label class="form-label fw-bold text-dark small mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>Pilih Cepat Pelanggaran Umum (Opsional):</label>
+                  <select id="pilihPreset" class="form-select form-select-sm" onchange="isiOtomatis(this)">
+                    <option value="">-- Atau ubah dari daftar standar sekolah --</option>
+                    <optgroup label="Ringan (Poin 5 - 15)">
+                      <option value="Terlambat datang ke sekolah|5">Terlambat datang ke sekolah (Poin: 5)</option>
+                      <option value="Atribut seragam tidak lengkap / tidak sesuai|10">Atribut seragam tidak lengkap / tidak sesuai (Poin: 10)</option>
+                      <option value="Tidak memakai atribut upacara|10">Tidak memakai atribut upacara (Poin: 10)</option>
+                      <option value="Rambut / Kuku tidak rapi|10">Rambut / Kuku tidak rapi (Poin: 10)</option>
+                      <option value="Masuk kelas/ruangan tanpa izin guru|15">Masuk kelas/ruangan tanpa izin guru (Poin: 15)</option>
+                    </optgroup>
+                    <optgroup label="Sedang (Poin 20 - 50)">
+                      <option value="Membolos / keluar sekolah saat jam pelajaran|25">Membolos / keluar sekolah saat jam pelajaran (Poin: 25)</option>
+                      <option value="Tidak mengikuti kegiatan upacara sekolah wajib|20">Tidak mengikuti kegiatan upacara sekolah wajib (Poin: 20)</option>
+                      <option value="Membuang sampah sembarangan / merusak fasilitas ringan|30">Membuang sampah sembarangan / merusak fasilitas ringan (Poin: 30)</option>
+                      <option value="Membuat keributan saat KBM berlangsung|25">Membuat keributan saat KBM berlangsung (Poin: 25)</option>
+                      <option value="Membawa atau menggunakan gawai/HP saat jam pelajaran|35">Membawa atau menggunakan gawai/HP saat jam pelajaran (Poin: 35)</option>
+                    </optgroup>
+                    <optgroup label="Berat (Poin 55 - 100)">
+                      <option value="Merokok atau membawa vape di lingkungan sekolah|60">Merokok atau membawa vape di lingkungan sekolah (Poin: 60)</option>
+                      <option value="Berkelahi / melakukan tindakan kekerasan / perundungan|80">Berkelahi / melakukan tindakan kekerasan / perundungan (Poin: 80)</option>
+                      <option value="Mencuri barang milik teman, guru, atau sekolah|85">Mencuri barang milik teman, guru, atau sekolah (Poin: 85)</option>
+                      <option value="Membawa senjata tajam atau barang terlarang|100">Membawa senjata tajam atau barang terlarang (Poin: 100)</option>
+                      <option value="Memalsukan tanda tangan orang tua/wali atau guru|55">Memalsukan tanda tangan orang tua/wali atau guru (Poin: 55)</option>
+                    </optgroup>
+                  </select>
+                </div>
+
                 <div class="mb-3">
                   <label class="form-label fw-bold">Nama Kategori Pelanggaran</label>
-                  <input type="text" name="nama_kategori" class="form-control" value="<?= htmlspecialchars($data['nama'] ?? $data['nama_kategori'] ?? ''); ?>" required>
+                  <input type="text" name="nama_kategori" id="inputNama" class="form-control" value="<?= htmlspecialchars($data['nama'] ?? $data['nama_kategori'] ?? ''); ?>" required>
                 </div>
+
                 <div class="mb-3">
                   <label class="form-label fw-bold">Jumlah Poin</label>
-                  <input type="number" name="poin" class="form-control" value="<?= htmlspecialchars($data['poin'] ?? ''); ?>" required>
-                  <small class="text-muted">Sistem akan otomatis mengkategorikan ulang jenis pelanggaran berdasarkan poin.</small>
+                  <input type="number" name="poin" id="inputPoin" class="form-control" value="<?= htmlspecialchars($data['poin'] ?? ''); ?>" required oninput="cekJenisPoin(this.value)">
+                  <small class="text-muted">Deteksi Otomatis Jenis: <span id="badgeJenis" class="badge bg-secondary">Memuat...</span></small>
                 </div>
+
                 <div class="mb-4">
                   <label class="form-label fw-bold">Deskripsi / Keterangan</label>
                   <textarea name="deskripsi" class="form-control" rows="2"><?= htmlspecialchars($data['deskripsi'] ?? ''); ?></textarea>
                 </div>
+
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
                   <a href="../dashboard.php?tab=menu7" class="btn btn-secondary px-4 fw-bold">Batal</a>
                   <button type="submit" name="update" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Update Kategori</button>
@@ -117,6 +149,48 @@ if (isset($_POST['update'])) {
       </main>
     </div>
   </div>
+
+  <!-- SCRIPT JAVASCRIPT UNTUK OTOMATISASI DAN INISIALISASI AWAL -->
+  <script>
+    // Jalankan pengecekan jenis poin saat halaman pertama kali dimuat (untuk data yang sedang diedit)
+    window.onload = function() {
+      let initialPoin = document.getElementById('inputPoin').value;
+      if(initialPoin !== "") {
+        cekJenisPoin(initialPoin);
+      }
+    };
+
+    function isiOtomatis(selectElem) {
+      let val = selectElem.value;
+      if (val !== "") {
+        let parts = val.split("|");
+        let namaPelanggaran = parts[0];
+        let poinPelanggaran = parts[1];
+
+        document.getElementById('inputNama').value = namaPelanggaran;
+        document.getElementById('inputPoin').value = poinPelanggaran;
+        cekJenisPoin(poinPelanggaran);
+      }
+    }
+
+    function cekJenisPoin(val) {
+      let poin = parseInt(val);
+      let badge = document.getElementById('badgeJenis');
+      if (isNaN(poin)) {
+        badge.className = "badge bg-secondary";
+        badge.innerText = "Masukkan Poin";
+      } else if (poin >= 1 && poin <= 15) {
+        badge.className = "badge bg-info text-dark";
+        badge.innerText = "Ringan (Otomatis)";
+      } else if (poin >= 20 && poin <= 50) {
+        badge.className = "badge bg-warning text-dark";
+        badge.innerText = "Sedang (Otomatis)";
+      } else {
+        badge.className = "badge bg-danger";
+        badge.innerText = "Berat (Otomatis)";
+      }
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

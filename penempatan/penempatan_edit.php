@@ -23,11 +23,11 @@ if (!$current) {
     exit();
 }
 
-// Ambil data tingkat dan jurusan dari kelas saat ini
+// Ambil tingkat dan nama kelas saat ini
 $q_kls_curr = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE id = '{$current['kelas_id']}'");
 $d_kls_curr = mysqli_fetch_assoc($q_kls_curr);
 $curr_tingkat = $d_kls_curr['tingkat'] ?? '';
-$curr_jurusan = $d_kls_curr['jurusan'] ?? '';
+$curr_nama_kelas = $d_kls_curr['nama'] ?? '';
 
 $error = "";
 
@@ -39,13 +39,15 @@ if (isset($_POST['update'])) {
     $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
     if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($tingkat_pilih) && !empty($jurusan_pilih)) {
-        // Cari ID kelas yang cocok berdasarkan tingkat dan jurusan yang dipilih
-        $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND jurusan = '$jurusan_pilih' LIMIT 1");
+        $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$jurusan_pilih' OR jurusan = '$jurusan_pilih') LIMIT 1");
         
         if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
             $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
             $kelas_id = $d_kelas['id'];
+            $nama_kelas_sync = $d_kelas['nama'];
+            $jurusan_sync = $d_kelas['jurusan'];
 
+            // 1. Update t_kelas_siswa
             $query = "UPDATE t_kelas_siswa SET 
                         siswa_id = '$siswa_id', 
                         tahun_ajaran_id = '$tahun_ajaran_id', 
@@ -55,16 +57,19 @@ if (isset($_POST['update'])) {
             $result = mysqli_query($koneksi, $query);
 
             if ($result) {
+                // 2. Sinkronisasi otomatis ke t_siswa
+                mysqli_query($koneksi, "UPDATE t_siswa SET kelas_id = '$kelas_id', kelas = '$nama_kelas_sync', jurusan = '$jurusan_sync' WHERE id = '$siswa_id'");
+
                 echo "<script>
-                        alert('Data penempatan siswa berhasil diperbarui!');
+                        alert('Data penempatan dan sinkronisasi siswa berhasil diperbarui!');
                         window.location.href = '../dashboard.php?tab=menu6';
                       </script>";
                 exit();
             } else {
-                $error = "Gagal memperbarui data ke database: " . mysqli_error($koneksi);
+                $error = "Gagal memperbarui data: " . mysqli_error($koneksi);
             }
         } else {
-            $error = "Data kelas dengan Tingkat $tingkat_pilih dan Jurusan $jurusan_pilih tidak ditemukan di tabel t_kelas!";
+            $error = "Data kelas tidak ditemukan untuk kombinasi tersebut!";
         }
     } else {
         $error = "Semua kolom wajib diisi!";
@@ -116,13 +121,13 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container py-4" style="max-width: 750px;">
+        <div class="container-fluid px-0">
           <form action="" method="POST">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3 me-2 text-warning"></i>Edit Penempatan Siswa</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Penempatan Siswa</h5>
               </div>
               <div class="card-body p-4 bg-white">
                 <?php if (!empty($error)): ?>
@@ -143,27 +148,27 @@ if (isset($_POST['update'])) {
                   </select>
                 </div>
 
-                <!-- 2 KOLOM SEJAJAR: Tingkat Kelas dan Jurusan -->
+                <!-- 2 KOLOM TERPISAH: Tingkat Kelas dan Pilihan Kelas & Jurusan -->
                 <div class="row g-3 mb-3">
                   <div class="col-md-6">
                     <label class="form-label fw-bold">Tingkat Kelas</label>
                     <select name="tingkat_pilih" class="form-select" required>
                       <option value="">-- Pilih Tingkat --</option>
-                      <option value="10" <?= ($curr_tingkat == '10') ? 'selected' : ''; ?>>X (10)</option>
-                      <option value="11" <?= ($curr_tingkat == '11') ? 'selected' : ''; ?>>XI (11)</option>
-                      <option value="12" <?= ($curr_tingkat == '12') ? 'selected' : ''; ?>>XII (12)</option>
+                      <option value="10" <?= ($curr_tingkat == '10') ? 'selected' : ''; ?>>10 (X)</option>
+                      <option value="11" <?= ($curr_tingkat == '11') ? 'selected' : ''; ?>>11 (XI)</option>
+                      <option value="12" <?= ($curr_tingkat == '12') ? 'selected' : ''; ?>>12 (XII)</option>
                     </select>
                   </div>
 
                   <div class="col-md-6">
-                    <label class="form-label fw-bold">Jurusan</label>
+                    <label class="form-label fw-bold">Pilihan Kelas & Jurusan</label>
                     <select name="jurusan_pilih" class="form-select" required>
-                      <option value="">-- Pilih Jurusan --</option>
+                      <option value="">-- Pilih Kelas --</option>
                       <?php
-                      $q_jur = mysqli_query($koneksi, "SELECT DISTINCT jurusan FROM t_kelas WHERE jurusan IS NOT NULL AND jurusan != '' ORDER BY jurusan ASC");
+                      $q_jur = mysqli_query($koneksi, "SELECT DISTINCT nama FROM t_kelas WHERE nama IS NOT NULL AND nama != '' ORDER BY nama ASC");
                       while ($j = mysqli_fetch_assoc($q_jur)) {
-                          $selected = ($j['jurusan'] == $curr_jurusan) ? 'selected' : '';
-                          echo "<option value='{$j['jurusan']}' {$selected}>{$j['jurusan']}</option>";
+                          $selected = ($j['nama'] == $curr_nama_kelas) ? 'selected' : '';
+                          echo "<option value='{$j['nama']}' {$selected}>{$j['nama']}</option>";
                       }
                       ?>
                     </select>
@@ -171,11 +176,11 @@ if (isset($_POST['update'])) {
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label fw-bold">Tahun Ajaran (2025 - 2028)</label>
+                  <label class="form-label fw-bold">Tahun Ajaran</label>
                   <select name="tahun_ajaran_id" class="form-select" required>
                     <option value="">-- Pilih Tahun Ajaran --</option>
                     <?php
-                    $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran WHERE nama IN ('2025/2026', '2026/2027', '2027/2028', '2028/2029') GROUP BY nama ORDER BY nama ASC");
+                    $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY nama DESC");
                     while ($ta = mysqli_fetch_assoc($q_ta)) {
                         $selected = ($ta['id'] == $current['tahun_ajaran_id']) ? 'selected' : '';
                         echo "<option value='{$ta['id']}' {$selected}>{$ta['nama']}</option>";
