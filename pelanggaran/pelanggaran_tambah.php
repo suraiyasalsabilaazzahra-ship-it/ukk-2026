@@ -1,9 +1,19 @@
 <?php
-session_start();
-include '../koneksi.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Perbaikan path koneksi yang aman dari folder manapun file ini diakses
+if (file_exists('../koneksi.php')) {
+    include '../koneksi.php';
+} elseif (file_exists('koneksi.php')) {
+    include 'koneksi.php';
+} else {
+    include '../../koneksi.php';
+}
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: ../dashboard.php?tab=menu9");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -31,9 +41,10 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
         
         $exec = mysqli_query($koneksi, $query_insert);
         if ($exec) {
+            $target_tab = ($role === 'Guru') ? 'menu2' : 'menu9';
             echo "<script>
                     alert('Berhasil! Data pelanggaran siswa telah dicatat.');
-                    window.location.href = '../dashboard.php?tab=menu9';
+                    window.location.href = '../dashboard.php?tab={$target_tab}';
                   </script>";
             exit();
         } else {
@@ -57,7 +68,7 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
     .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
     .sidebar .nav-link-custom { color: rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .sidebar .nav-link-custom:hover { color: #ffc107; background-color: rgba(255, 193, 7, 0.15); }
-    main { margin-left: 250px; }
+    main { margin-left: 250px; width: calc(100% - 250px); }
   </style>
 </head>
 <body>
@@ -75,22 +86,20 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
         <hr class="text-white-50">
         <ul class="nav flex-column mb-auto">
           <li class="nav-item"><a href="../dashboard.php?tab=menu1" class="nav-link-custom"><i class="bi bi-speedometer2 fs-5"></i><span>Dashboard</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu2" class="nav-link-custom"><i class="bi bi-person-workspace fs-5"></i><span>Data Guru</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu3" class="nav-link-custom"><i class="bi bi-door-closed fs-5"></i><span>Data Kelas</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu4" class="nav-link-custom"><i class="bi bi-people fs-5"></i><span>Data Siswa</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu5" class="nav-link-custom"><i class="bi bi-calendar-event fs-5"></i><span>Tahun Ajaran</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu6" class="nav-link-custom"><i class="bi bi-diagram-3 fs-5"></i><span>Penempatan Siswa</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu7" class="nav-link-custom"><i class="bi bi-tags fs-5"></i><span>Kategori Pelanggaran</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu8" class="nav-link-custom"><i class="bi bi-person-bounding-box fs-5"></i><span>Data Wali Kelas</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu9" class="nav-link-custom" style="background-color: #ffc107; color: #0d1b2a; font-weight: 700;"><i class="bi bi-exclamation-triangle fs-5"></i><span>Pencatatan Pelanggaran</span></a></li>
-          <li class="nav-item"><a href="../dashboard.php?tab=menu10" class="nav-link-custom"><i class="bi bi-file-earmark-text fs-5"></i><span>Laporan Pelanggaran</span></a></li>
+          <?php if ($role === 'Guru'): ?>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu2" class="nav-link-custom" style="background-color: #ffc107; color: #0d1b2a; font-weight: 700;"><i class="bi bi-exclamation-triangle fs-5"></i><span>Catat Pelanggaran</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu3" class="nav-link-custom"><i class="bi bi-check-circle fs-5"></i><span>Tindakan</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu4" class="nav-link-custom"><i class="bi bi-person-badge fs-5"></i><span>Profil Guru</span></a></li>
+          <?php else: ?>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu9" class="nav-link-custom" style="background-color: #ffc107; color: #0d1b2a; font-weight: 700;"><i class="bi bi-exclamation-triangle fs-5"></i><span>Pencatatan Pelanggaran</span></a></li>
+          <?php endif; ?>
           <li class="nav-item"><a href="../dashboard.php?tab=menu_about" class="nav-link-custom"><i class="bi bi-person-circle fs-5"></i><span>About Me</span></a></li>
           <li class="nav-item mt-4"><a href="../logout.php" class="nav-link-custom text-warning fw-bold bg-transparent border border-warning"><i class="bi bi-box-arrow-right fs-5"></i><span>Logout</span></a></li>
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
-      <main class="col-md-9 col-lg-10 p-4 ms-auto">
+      <!-- KONTEN UTAMA (Memenuhi Layar / Full-Width Rata Kiri) -->
+      <main class="col-12 p-4 ms-auto">
         <div class="container-fluid px-0">
           <?php if (!empty($msg_error)): ?>
             <div class="alert alert-danger shadow-sm mb-3"><?= $msg_error; ?></div>
@@ -123,7 +132,6 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
                   <select name="kategori_id" id="pilihKategori" class="form-select py-2" required onchange="updatePoinInfo(this)">
                     <option value="">-- Pilih Jenis Pelanggaran --</option>
                     <?php
-                    // Mengambil data dengan menangani fleksibilitas kolom nama/nama_kategori
                     $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori ORDER BY id DESC");
                     if ($q_kat) {
                         while ($k = mysqli_fetch_assoc($q_kat)) {
@@ -148,7 +156,7 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
                 </div>
 
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-                  <a href="../dashboard.php?tab=menu9" class="btn btn-secondary px-4 fw-bold">Batal</a>
+                  <a href="../dashboard.php?tab=<?= ($role === 'Guru') ? 'menu2' : 'menu9'; ?>" class="btn btn-secondary px-4 fw-bold">Batal</a>
                   <button type="submit" name="btn_simpan_pelanggaran" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Simpan Pelanggaran</button>
                 </div>
 
