@@ -33,10 +33,10 @@ $total_kelas   = ($total_kelas_q) ? mysqli_fetch_assoc($total_kelas_q)['total'] 
 // Konfigurasi Menu Berdasarkan Role
 if ($role === 'Guru') {
   $menus = [
-    ['id' => 'dashboard', 'name' => '1. Beranda Guru', 'icon' => 'bi-speedometer2'],
-    ['id' => 'menu2', 'name' => '2. Catat Pelanggaran', 'icon' => 'bi-exclamation-octagon'],
-    ['id' => 'menu3', 'name' => '3. Tindakan', 'icon' => 'bi-shield-check'],
-    ['id' => 'menu4', 'name' => '4. Profil Guru', 'icon' => 'bi-person-badge'],
+    ['id' => 'dashboard', 'name' => 'Beranda Guru', 'icon' => 'bi-speedometer2'],
+    ['id' => 'menu2', 'name' => 'Catat Pelanggaran', 'icon' => 'bi-exclamation-octagon'],
+    ['id' => 'menu3', 'name' => 'Tindakan', 'icon' => 'bi-shield-check'],
+    ['id' => 'menu4', 'name' => 'Profil Guru', 'icon' => 'bi-person-badge'],
     ['id' => 'menu_about', 'name' => 'About Me', 'icon' => 'bi-info-circle']
   ];
 } else {
@@ -220,14 +220,14 @@ if ($role === 'Guru') {
           ?>
         </div>
         
-        <!-- TAB 2: CATAT PELANGGARAN (Guru) / DATA GURU (Admin) -->
+       <!-- TAB 2: CATAT PELANGGARAN (Guru) / DATA GURU (Admin) -->
         <div id="tab-menu2" class="tab-content" style="display: <?= ($active_tab === 'menu2') ? 'block' : 'none'; ?>;">
           <?php 
           if ($role === 'Guru') {
-              if (file_exists('pelanggaran/pelanggaran_tambah.php')) {
-                  include 'pelanggaran/pelanggaran_tambah.php';
+              if (file_exists('tab_catat_pelanggaran_guru.php')) {
+                  include 'tab_catat_pelanggaran_guru.php';
               } else {
-                  echo '<div class="alert alert-danger">File pelanggaran_tambah.php tidak ditemukan di folder pelanggaran.</div>';
+                  echo '<div class="alert alert-danger">File tab_catat_pelanggaran_guru.php tidak ditemukan.</div>';
               }
           } else {
               if (file_exists('tab_guru.php')) {

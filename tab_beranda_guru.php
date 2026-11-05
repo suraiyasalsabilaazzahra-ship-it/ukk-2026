@@ -15,43 +15,49 @@ $tot_kategori = ($q_tk) ? mysqli_fetch_assoc($q_tk)['total'] : 0;
 </div>
 
 <div class="row g-4 mb-4">
+  <!-- KARTU 1: TOTAL SISWA -->
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-danger border-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 border-start border-danger border-4 bg-white">
       <div class="d-flex align-items-center justify-content-between">
         <div>
           <span class="text-muted small fw-bold text-uppercase">Total Siswa</span>
           <h2 class="fw-bold mb-0 text-dark mt-1"><?= $tot_siswa; ?></h2>
         </div>
-        <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger fs-3">
-          <i class="bi bi-people"></i>
+        <!-- Ikon Bulat Sempurna (Tidak Lonjong) -->
+        <div class="bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 60px; height: 60px; min-width: 60px; min-height: 60px;">
+          <i class="bi bi-people fs-4"></i>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- KARTU 2: CATATAN PELANGGARAN -->
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-warning border-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 border-start border-warning border-4 bg-white">
       <div class="d-flex align-items-center justify-content-between">
         <div>
           <span class="text-muted small fw-bold text-uppercase">Catatan Pelanggaran</span>
           <h2 class="fw-bold mb-0 text-dark mt-1"><?= $tot_pelanggaran; ?></h2>
         </div>
-        <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning fs-3">
-          <i class="bi bi-exclamation-triangle"></i>
+        <!-- Ikon Bulat Sempurna (Tidak Lonjong) -->
+        <div class="bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 60px; height: 60px; min-width: 60px; min-height: 60px;">
+          <i class="bi bi-exclamation-triangle fs-4"></i>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- KARTU 3: KATEGORI PELANGGARAN -->
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm rounded-4 p-3 border-start border-success border-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 border-start border-success border-4 bg-white">
       <div class="d-flex align-items-center justify-content-between">
         <div>
           <span class="text-muted small fw-bold text-uppercase">Kategori Pelanggaran</span>
           <h2 class="fw-bold mb-0 text-dark mt-1"><?= $tot_kategori; ?></h2>
         </div>
-        <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success fs-3">
-          <i class="bi bi-tags"></i>
+        <!-- Ikon Bulat Sempurna (Tidak Lonjong) -->
+        <div class="bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 60px; height: 60px; min-width: 60px; min-height: 60px;">
+          <i class="bi bi-tags fs-4"></i>
         </div>
       </div>
     </div>

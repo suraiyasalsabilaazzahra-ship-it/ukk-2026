@@ -3,87 +3,123 @@ session_start();
 include '../koneksi.php';
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: ../login.php");
-    exit();
+  header("Location: ../login.php");
+  exit();
 }
 
 $role = $_SESSION['role'];
 
 // Proses Simpan Data Guru & Akun Login Otomatis
 if (isset($_POST['simpan'])) {
-    $nip          = mysqli_real_escape_string($koneksi, $_POST['nip']);
-    $nama         = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $email        = mysqli_real_escape_string($koneksi, $_POST['email']);
-    $password     = $_POST['password'] ?? '123456';
-    $status_aktif = $_POST['status_aktif'];
+  $nip          = mysqli_real_escape_string($koneksi, $_POST['nip']);
+  $nama         = mysqli_real_escape_string($koneksi, $_POST['nama']);
+  $email        = mysqli_real_escape_string($koneksi, $_POST['email']);
+  $password     = $_POST['password'] ?? '123456';
+  $status_aktif = $_POST['status_aktif'];
 
-    if (empty($password)) {
-        $password = '123456';
-    }
+  if (empty($password)) {
+    $password = '123456';
+  }
 
-    // Validasi NIP Maksimal 18 Digit
-    if (strlen($nip) > 18) {
-        echo "<script>alert('Gagal: NIP tidak boleh lebih dari 18 digit!'); window.history.back();</script>";
-        exit();
-    }
+  // Validasi NIP Maksimal 18 Digit
+  if (strlen($nip) > 18) {
+    echo "<script>alert('Gagal: NIP tidak boleh lebih dari 18 digit!'); window.history.back();</script>";
+    exit();
+  }
 
-    // Cek apakah email sudah terdaftar di t_users
-    $cek_email = mysqli_query($koneksi, "SELECT * FROM t_users WHERE email = '$email'");
-    if (mysqli_num_rows($cek_email) > 0) {
-        echo "<script>alert('Gagal: Email ini sudah terdaftar sebagai akun login!'); window.history.back();</script>";
-        exit();
-    }
+  // Cek apakah email sudah terdaftar di t_users
+  $cek_email = mysqli_query($koneksi, "SELECT * FROM t_users WHERE email = '$email'");
+  if (mysqli_num_rows($cek_email) > 0) {
+    echo "<script>alert('Gagal: Email ini sudah terdaftar sebagai akun login!'); window.history.back();</script>";
+    exit();
+  }
 
-    // 1. BUAT AKUN LOGIN BARU DI TABEL t_users (Menggunakan kolom 'nama', bukan 'username')
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    $q_max_user = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_users");
-    $r_max_user = mysqli_fetch_assoc($q_max_user);
-    $new_user_id = ($r_max_user['max_id'] ?? 0) + 1;
+  // 1. BUAT AKUN LOGIN BARU DI TABEL t_users
+  $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+  $q_max_user = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_users");
+  $r_max_user = mysqli_fetch_assoc($q_max_user);
+  $new_user_id = ($r_max_user['max_id'] ?? 0) + 1;
 
-    $query_user = "INSERT INTO t_users (id, nama, email, password, role) 
+  $query_user = "INSERT INTO t_users (id, nama, email, password, role) 
                    VALUES ('$new_user_id', '$nama', '$email', '$hashed_password', 'Guru')";
-    
-    if (mysqli_query($koneksi, $query_user)) {
-        // 2. BUAT DATA GURU DI TABEL t_guru
-        $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_guru");
-        $r_max = mysqli_fetch_assoc($q_max);
-        $new_id = ($r_max['max_id'] ?? 0) + 1;
 
-        $query_guru = "INSERT INTO t_guru (id, nip, nama, email, status_aktif, user_id) 
+  if (mysqli_query($koneksi, $query_user)) {
+    // 2. BUAT DATA GURU DI TABEL t_guru
+    $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_guru");
+    $r_max = mysqli_fetch_assoc($q_max);
+    $new_id = ($r_max['max_id'] ?? 0) + 1;
+
+    $query_guru = "INSERT INTO t_guru (id, nip, nama, email, status_aktif, user_id) 
                        VALUES ('$new_id', '$nip', '$nama', '$email', '$status_aktif', '$new_user_id')";
 
-        if (mysqli_query($koneksi, $query_guru)) {
-            echo "<script>
+    if (mysqli_query($koneksi, $query_guru)) {
+      echo "<script>
                     alert('Berhasil! Data guru dan akun login baru telah dibuat.'); 
                     window.location.href='../dashboard.php?tab=menu2';
                   </script>";
-            exit();
-        } else {
-            $err_guru = mysqli_error($koneksi);
-            echo "<script>alert('Gagal di t_guru: " . addslashes($err_guru) . "');</script>";
-        }
+      exit();
     } else {
-        $err_user = mysqli_error($koneksi);
-        echo "<script>alert('Gagal di t_users: " . addslashes($err_user) . "');</script>";
+      $err_guru = mysqli_error($koneksi);
+      echo "<script>alert('Gagal di t_guru: " . addslashes($err_guru) . "');</script>";
     }
+  } else {
+    $err_user = mysqli_error($koneksi);
+    echo "<script>alert('Gagal di t_users: " . addslashes($err_user) . "');</script>";
+  }
 }
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tambah Data Guru - UKK 2026</title>
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons (Penting agar ikon mata muncul) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
-    .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
-    .sidebar .nav-link-custom { color: rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .sidebar .nav-link-custom:hover { color: #ffc107; background-color: rgba(255, 193, 7, 0.15); }
-    main { margin-left: 250px; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%);
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 250px;
+      z-index: 1000;
+    }
+
+    .sidebar .nav-link-custom {
+      color: rgba(255, 255, 255, 0.85);
+      background-color: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar .nav-link-custom:hover {
+      color: #ffc107;
+      background-color: rgba(255, 193, 7, 0.15);
+    }
+
+    main {
+      margin-left: 250px;
+    }
   </style>
 </head>
+
 <body>
   <div class="container-fluid">
     <div class="row">
@@ -171,7 +207,12 @@ if (isset($_POST['simpan'])) {
                 </div>
                 <div class="mb-4">
                   <label class="form-label fw-bold">Password Akun Login</label>
-                  <input type="password" name="password" class="form-control" placeholder="Masukkan password (Default: 123456 jika kosong)">
+                  <div class="input-group">
+                    <input type="password" name="password" id="passwordInput" class="form-control" placeholder="Masukkan password (Default: 123456 jika kosong)">
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePass('passwordInput', 'iconPass')">
+                      <i class="bi bi-eye-slash" id="iconPass"></i>
+                    </button>
+                  </div>
                   <small class="text-muted">*Akun baru akan otomatis terbuat agar guru bisa langsung login.</small>
                 </div>
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
@@ -185,6 +226,22 @@ if (isset($_POST['simpan'])) {
       </main>
     </div>
   </div>
+
+  <!-- Skrip JavaScript untuk Toggle Ikon Mata -->
+  <script>
+    function togglePass(inputId, iconId) {
+      let input = document.getElementById(inputId);
+      let icon = document.getElementById(iconId);
+      if (input.type === "password") {
+        input.type = "text";
+        icon.className = "bi bi-eye";
+      } else {
+        input.type = "password";
+        icon.className = "bi bi-eye-slash";
+      }
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
