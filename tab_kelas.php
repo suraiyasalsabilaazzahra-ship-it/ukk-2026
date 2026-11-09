@@ -4,20 +4,20 @@ $batas = 10;
 
 // 2. Ambil halaman saat ini dari URL (default ke halaman 1)
 $halaman = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
-$halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
+$halaman_awal = ($halaman > 1) ? ($halaman * $batas) -$batas : 0;
 
 // 3. Ambil kata kunci pencarian jika ada
-$cari = isset($_GET['cari_kelas']) ? mysqli_real_escape_string($koneksi, $_GET['cari_kelas']) : '';
+$cari = isset($_GET['cari_kelas']) ? mysqli_real_escape_string($koneksi,$_GET['cari_kelas']) : '';
 
-// 4. Hitung total seluruh data kelas (Query LIKE diperbaiki agar pencarian akurat)
+// 4. Hitung total seluruh data kelas
 if (!empty($cari)) {
-    $query_total = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE nama LIKE '%$cari%' OR jurusan LIKE '%$cari%'");
+    $query_total = mysqli_query($koneksi, "SELECT k.* FROM t_kelas k LEFT JOIN t_guru g ON k.wali_kelas_id = g.id WHERE k.nama LIKE '%$cari%' OR k.jurusan LIKE '%$cari\%' OR g.nama LIKE '\%$cari%'");
 } else {
     $query_total = mysqli_query($koneksi, "SELECT * FROM t_kelas");
 }
 
 $total_data = ($query_total) ? mysqli_num_rows($query_total) : 0;
-$total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
+$total_halaman = ceil($total_data / $batas);
 ?>
 <div class="custom-table-card p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -39,7 +39,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
         <div class="col-md-10">
           <div class="input-group">
             <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" name="cari_kelas" class="form-control border-start-0 ps-0" placeholder="Cari nama kelas atau jurusan..." value="<?= htmlspecialchars($cari); ?>">
+            <input type="text" name="cari_kelas" class="form-control border-start-0 ps-0" placeholder="Cari nama kelas, jurusan, atau nama wali kelas..." value="<?= htmlspecialchars($cari); ?>">
           </div>
         </div>
         <div class="col-md-2 d-flex gap-2">
@@ -56,30 +56,38 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          <th width="10%">ID</th>
-          <th>Nama Kelas</th>
-          <th width="15%">Tingkat</th>
-          <th width="20%">Jurusan</th>
-          <th width="15%" class="text-center">Aksi</th>
+          <th width="8%">ID</th>
+          <th width="18%">Nama Kelas</th>
+          <th width="12%">Tingkat</th>
+          <th width="18%">Jurusan</th>
+          <th width="24%">Wali Kelas</th>
+          <th width="20%" class="text-center">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php
-        // Query data kelas dengan pencarian yang sudah diperbaiki
-        if (!empty($cari)) {
-            $q_kls = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE nama LIKE '%$cari%' OR jurusan LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
-        } else {
-            $q_kls = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY id DESC LIMIT $halaman_awal, $batas");
+        // Query data kelas JOIN dengan t_guru
+        $sql = "SELECT k.*, g.nama AS nama_wali 
+                FROM t_kelas k 
+                LEFT JOIN t_guru g ON k.wali_kelas_id = g.id";
+        
+        if (!empty($cari)) {$sql .= " WHERE k.nama LIKE '%$cari%' OR k.jurusan LIKE '%$cari\%' OR g.nama LIKE '\%$cari%'";
         }
+        $sql .= " ORDER BY k.id DESC LIMIT $halaman_awal,$batas";
+
+        $q_kls = mysqli_query($koneksi,$sql);
 
         if ($q_kls && mysqli_num_rows($q_kls) > 0) {
-            while ($k = mysqli_fetch_assoc($q_kls)) {
-                $nama_kelas = $k['nama'] ?? $k['nama_kelas'] ?? '-';
+            while ($k = mysqli_fetch_assoc($q_kls)) {$nama_kelas = $k['nama'] ?? $k['nama_kelas'] ?? '-';
+                $nama_wali  = !empty($k['nama_wali']) 
+                              ? "<span class='fw-semibold text-dark'><i class='bi bi-person-badge text-warning me-1'></i>{$k['nama_wali']}</span>" 
+                              : "<span class='badge bg-secondary-subtle text-muted fw-normal'>Belum Ditentukan</span>";
                 echo "<tr>
                         <td class='text-muted'>#{$k['id']}</td>
                         <td class='fw-semibold'>{$nama_kelas}</td>
                         <td><span class='badge bg-light text-dark border'>Tingkat {$k['tingkat']}</span></td>
                         <td>{$k['jurusan']}</td>
+                        <td>{$nama_wali}</td>
                         <td class='text-center'>
                           <a href='kelas/kelas_edit.php?id={$k['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'>Edit</a>
                           <a href='kelas/kelas_hapus.php?id={$k['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus kelas ini?\")'>Hapus</a>
@@ -87,47 +95,35 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
                       </tr>";
             }
         } else {
-            echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada data kelas ditemukan</td></tr>";
+            echo "<tr><td colspan='6' class='text-center py-4 text-muted'>Belum ada data kelas ditemukan</td></tr>";
         }
         ?>
       </tbody>
     </table>
   </div>
 
-  <!-- NAVIGASI PAGINASI / TOMBOL HALAMAN -->
+  <!-- NAVIGASI PAGINASI -->
   <?php if ($total_halaman > 1): ?>
   <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
     <small class="text-muted">
-      Menampilkan data ke-<?= ($halaman_awal + 1); ?> sampai <?= min($halaman_awal + $batas, $total_data); ?> dari total <?= $total_data; ?> data
+      Menampilkan data ke-<?= ($halaman_awal + 1); ?> sampai <?= min($halaman_awal +$batas, $total_data); ?> dari total <?=$total_data; ?> data
     </small>
     
     <nav>
       <ul class="pagination pagination-sm mb-0">
-        <!-- Tombol Sebelumnya -->
         <li class="page-item <?= ($halaman <= 1) ? 'disabled' : ''; ?>">
-          <a class="page-link" href="dashboard.php?tab=menu3&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">
-            Sebelumnya
-          </a>
+          <a class="page-link" href="dashboard.php?tab=menu3&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">Sebelumnya</a>
         </li>
-
-        <!-- Tombol Angka Halaman (1, 2, 3...) -->
         <?php for ($x = 1; $x <= $total_halaman; $x++): ?>
-          <li class="page-item <?= ($halaman == $x) ? 'active' : ''; ?>">
-            <a class="page-link" style="<?= ($halaman == $x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu3&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">
-              <?= $x; ?>
-            </a>
+          <li class="page-item <?= ($halaman ==$x) ? 'active' : ''; ?>">
+            <a class="page-link" style="<?= ($halaman ==$x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu3&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>"><?= $x; ?></a>
           </li>
         <?php endfor; ?>
-
-        <!-- Tombol Lanjutkan / Selanjutnya -->
-        <li class="page-item <?= ($halaman >= $total_halaman) ? 'disabled' : ''; ?>">
-          <a class="page-link" href="dashboard.php?tab=menu3&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">
-            Lanjutkan
-          </a>
+        <li class="page-item <?= ($halaman >=$total_halaman) ? 'disabled' : ''; ?>">
+          <a class="page-link" href="dashboard.php?tab=menu3&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">Lanjutkan</a>
         </li>
       </ul>
     </nav>
   </div>
   <?php endif; ?>
-
 </div>

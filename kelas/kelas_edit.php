@@ -23,15 +23,47 @@ if (!$data) {
     exit();
 }
 
-if (isset($_POST['update'])) {
-    $nama_kelas = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $tingkat    = mysqli_real_escape_string($koneksi, $_POST['tingkat']);
-    $jurusan    = mysqli_real_escape_string($koneksi, $_POST['jurusan']);
+// Ambil tahun ajaran aktif otomatis untuk sinkronisasi
+$tahun_sekarang = date('Y');
+$nama_ta_otomatis = $tahun_sekarang . '/' . ($tahun_sekarang + 1);
+$q_ta_auto = mysqli_query($koneksi, "SELECT id FROM t_tahun_ajaran WHERE nama = '$nama_ta_otomatis' LIMIT 1");
+$d_ta_auto = mysqli_fetch_assoc($q_ta_auto);
+$default_ta_id = $d_ta_auto['id'] ?? null;
 
-    $query = "UPDATE t_kelas SET nama = '$nama_kelas', tingkat = '$tingkat', jurusan = '$jurusan' WHERE id = '$id'";
+if (isset($_POST['update'])) {
+    $nama_kelas    = mysqli_real_escape_string($koneksi, $_POST['nama']);
+    $tingkat       = mysqli_real_escape_string($koneksi, $_POST['tingkat']);
+    $jurusan       = mysqli_real_escape_string($koneksi, $_POST['jurusan']);
+    $wali_kelas_id = !empty($_POST['wali_kelas_id']) ? (int)$_POST['wali_kelas_id'] : null;
+
+    $val_wali = $wali_kelas_id ? "'$wali_kelas_id'" : "NULL";
+    $query = "UPDATE t_kelas SET nama = '$nama_kelas', tingkat = '$tingkat', jurusan = '$jurusan', wali_kelas_id = $val_wali WHERE id = '$id'";
 
     if (mysqli_query($koneksi, $query)) {
-        echo "<script>alert('Data kelas berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu3';</script>";
+        
+        // SINKRONISASI KE TABEL t_wali_kelas
+        if ($default_ta_id) {
+            // Cek apakah data wali kelas untuk kelas ini sudah ada di t_wali_kelas
+            $cek_wk = mysqli_query($koneksi, "SELECT id FROM t_wali_kelas WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
+            
+            if ($wali_kelas_id) {
+                if (mysqli_num_rows($cek_wk) > 0) {
+                    // Update guru jika sudah ada
+                    mysqli_query($koneksi, "UPDATE t_wali_kelas SET guru_id = '$wali_kelas_id' WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
+                } else {
+                    // Insert baru jika belum ada
+                    $q_max_wk = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_wali_kelas");
+                    $r_max_wk = mysqli_fetch_assoc($q_max_wk);
+                    $new_id_wk = ($r_max_wk['max_id'] ?? 0) + 1;
+                    mysqli_query($koneksi, "INSERT INTO t_wali_kelas (id, guru_id, kelas_id, tahun_ajaran_id, status_aktif) VALUES ('$new_id_wk', '$wali_kelas_id', '$id', '$default_ta_id', '1')");
+                }
+            } else {
+                // Jika pilihan wali kelas dikosongkan, hapus dari t_wali_kelas
+                mysqli_query($koneksi, "DELETE FROM t_wali_kelas WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
+            }
+        }
+
+        echo "<script>alert('Data kelas dan sinkronisasi wali kelas berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu3';</script>";
         exit();
     } else {
         $err = mysqli_error($koneksi);
@@ -43,13 +75,12 @@ if (isset($_POST['update'])) {
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Data Kelas - UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
-    .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
+    .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; overflow-y: auto; }
     .sidebar .nav-link-custom { color: rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .sidebar .nav-link-custom:hover { color: #ffc107; background-color: rgba(255, 193, 7, 0.15); }
     main { margin-left: 250px; }
@@ -58,7 +89,7 @@ if (isset($_POST['update'])) {
 <body>
   <div class="container-fluid">
     <div class="row">
-      <!-- SIDEBAR -->
+      <!-- SIDEBAR LENGKAP -->
       <div class="col-md-3 col-lg-2 sidebar p-3 text-white">
         <div class="d-flex align-items-center gap-2 mb-2 px-2 mt-2">
           <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
@@ -83,9 +114,10 @@ if (isset($_POST['update'])) {
           <li class="nav-item mt-4"><a href="../logout.php" class="nav-link-custom text-warning fw-bold bg-transparent border border-warning"><i class="bi bi-box-arrow-right fs-5"></i><span>Logout</span></a></li>
         </ul>
       </div>
-<!-- KONTEN UTAMA (Rata Kiri Penuh) -->
+
+      <!-- KONTEN UTAMA (Rata Kiri & Penuh) -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container-fluid px-0">
+        <div class="container-fluid py-2 px-0">
           <form action="" method="POST">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
@@ -104,13 +136,26 @@ if (isset($_POST['update'])) {
                     <option value="XII" <?= (($data['tingkat'] ?? '') == 'XII') ? 'selected' : ''; ?>>XII</option>
                   </select>
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                   <label class="form-label fw-bold">Jurusan</label>
                   <input type="text" name="jurusan" class="form-control" value="<?= htmlspecialchars($data['jurusan'] ?? ''); ?>" required>
                 </div>
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Wali Kelas</label>
+                  <select name="wali_kelas_id" class="form-select">
+                    <option value="">-- Pilih Wali Kelas (Opsional) --</option>
+                    <?php
+                    $q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru ORDER BY nama ASC");
+                    while ($g = mysqli_fetch_assoc($q_guru)) {
+                        $selected = (($data['wali_kelas_id'] ?? '') == $g['id']) ? 'selected' : '';
+                        echo "<option value='{$g['id']}' {$selected}>{$g['nama']}</option>";
+                    }
+                    ?>
+                  </select>
+                </div>
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
-                  <a href="../dashboard.php?tab=menu3" class="btn btn-secondary px-4">Batal</a>
-                  <button type="submit" name="update" class="btn text-white px-4 fw-bold" style="background-color: #1b263b; border-color: #1b263b;">Update Kelas</button>
+                  <a href="../dashboard.php?tab=menu3" class="btn btn-secondary px-4 fw-bold">Batal</a>
+                  <button type="submit" name="update" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Update Kelas</button>
                 </div>
               </div>
             </div>
