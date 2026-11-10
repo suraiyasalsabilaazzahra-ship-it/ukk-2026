@@ -1,9 +1,9 @@
 <?php
 session_start();
 if (file_exists('koneksi.php')) {
-    include 'koneksi.php';
+  include 'koneksi.php';
 } else {
-    include '../koneksi.php';
+  include '../koneksi.php';
 }
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
@@ -51,7 +51,7 @@ if ($role === 'Guru') {
     ['id' => 'menu8', 'name' => 'Data Wali Kelas', 'icon' => 'bi-person-bounding-box'],
     ['id' => 'menu9', 'name' => 'Pencatatan Pelanggaran', 'icon' => 'bi-exclamation-triangle'],
     ['id' => 'menu10', 'name' => 'Laporan Pelanggaran', 'icon' => 'bi-file-earmark-text'],
-    ['id' => 'menu_about', 'name' => 'About Me', 'icon' => 'bi-person-circle'], 
+    ['id' => 'menu_about', 'name' => 'About Me', 'icon' => 'bi-person-circle'],
   ];
 }
 ?>
@@ -202,77 +202,76 @@ if ($role === 'Guru') {
 
         <!-- TAB 1: BERANDA GURU / DASHBOARD ADMIN -->
         <div id="tab-dashboard" class="tab-content" style="display: <?= ($active_tab === 'dashboard' || $active_tab === 'menu1') ? 'block' : 'none'; ?>;">
-          <?>
-          <?php 
+          <?php
           if ($role === 'Guru') {
-              if (file_exists('tab_beranda_guru.php')) {
-                  include 'tab_beranda_guru.php';
-              } else {
-                  include 'tab_dashboard.php';
-              }
+            if (file_exists('tab_beranda_guru.php')) {
+              include 'tab_beranda_guru.php';
+            } else {
+              include 'tab_dashboard.php';
+            }
           } else {
-              if (file_exists('tab_dashboard.php')) {
-                  include 'tab_dashboard.php'; 
-              } else {
-                  echo '<div class="alert alert-info">Dashboard Admin</div>';
-              }
+            if (file_exists('tab_dashboard.php')) {
+              include 'tab_dashboard.php';
+            } else {
+              echo '<div class="alert alert-info">Dashboard Admin</div>';
+            }
           }
           ?>
         </div>
-        
-       <!-- TAB 2: CATAT PELANGGARAN (Guru) / DATA GURU (Admin) -->
+
+        <!-- TAB 2: CATAT PELANGGARAN (Guru) / DATA GURU (Admin) -->
         <div id="tab-menu2" class="tab-content" style="display: <?= ($active_tab === 'menu2') ? 'block' : 'none'; ?>;">
-          <?php 
+          <?php
           if ($role === 'Guru') {
-              if (file_exists('tab_catat_pelanggaran_guru.php')) {
-                  include 'tab_catat_pelanggaran_guru.php';
-              } else {
-                  echo '<div class="alert alert-danger">File tab_catat_pelanggaran_guru.php tidak ditemukan.</div>';
-              }
+            if (file_exists('tab_catat_pelanggaran_guru.php')) {
+              include 'tab_catat_pelanggaran_guru.php';
+            } else {
+              echo '<div class="alert alert-danger">File tab_catat_pelanggaran_guru.php tidak ditemukan.</div>';
+            }
           } else {
-              if (file_exists('tab_guru.php')) {
-                  include 'tab_guru.php'; 
-              } else {
-                  echo '<div class="alert alert-warning">File tab_guru.php belum ada.</div>';
-              }
+            if (file_exists('tab_guru.php')) {
+              include 'tab_guru.php';
+            } else {
+              echo '<div class="alert alert-warning">File tab_guru.php belum ada.</div>';
+            }
           }
           ?>
         </div>
 
         <!-- TAB 3: TINDAKAN (Guru) / DATA KELAS (Admin) -->
         <div id="tab-menu3" class="tab-content" style="display: <?= ($active_tab === 'menu3') ? 'block' : 'none'; ?>">
-            <?php
-            if ($role === 'Guru') {
-                if (file_exists('tindakan/index.php')) {
-                    include 'tindakan/index.php';
-                } else {
-                    echo '<div class="alert alert-danger">File index.php tidak ditemukan di folder tindakan.</div>';
-                }
+          <?php
+          if ($role === 'Guru') {
+            if (file_exists('tindakan/index.php')) {
+              include 'tindakan/index.php';
             } else {
-                if (file_exists('tab_kelas.php')) {
-                    include 'tab_kelas.php';
-                } else {
-                    echo '<div class="alert alert-warning">File tab_kelas.php belum ada.</div>';
-                }
+              echo '<div class="alert alert-danger">File index.php tidak ditemukan di folder tindakan.</div>';
             }
-            ?>
+          } else {
+            if (file_exists('tab_kelas.php')) {
+              include 'tab_kelas.php';
+            } else {
+              echo '<div class="alert alert-warning">File tab_kelas.php belum ada.</div>';
+            }
+          }
+          ?>
         </div>
 
         <!-- TAB 4: PROFIL GURU (Guru) / DATA SISWA (Admin) -->
         <div id="tab-menu4" class="tab-content" style="display: <?= ($active_tab === 'menu4') ? 'block' : 'none'; ?>;">
-          <?php 
+          <?php
           if ($role === 'Guru') {
-              if (file_exists('profil_guru.php')) {
-                  include 'profil_guru.php';
-              } else {
-                  echo '<div class="alert alert-danger">File profil_guru.php belum ada.</div>';
-              }
+            if (file_exists('profil_guru.php')) {
+              include 'profil_guru.php';
+            } else {
+              echo '<div class="alert alert-danger">File profil_guru.php belum ada.</div>';
+            }
           } else {
-              if (file_exists('tab_siswa.php')) {
-                  include 'tab_siswa.php'; 
-              } else {
-                  echo '<div class="alert alert-warning">File tab_siswa.php belum ada.</div>';
-              }
+            if (file_exists('tab_siswa.php')) {
+              include 'tab_siswa.php';
+            } else {
+              echo '<div class="alert alert-warning">File tab_siswa.php belum ada.</div>';
+            }
           }
           ?>
         </div>
@@ -306,7 +305,7 @@ if ($role === 'Guru') {
         <div id="tab-menu10" class="tab-content" style="display: <?= ($active_tab === 'menu10') ? 'block' : 'none'; ?>;">
           <?php if (file_exists('tab_laporan.php')) include 'tab_laporan.php'; ?>
         </div>
-             
+
         <!-- TAB ABOUT ME -->
         <div id="tab-menu_about" class="tab-content" style="display: <?= ($active_tab === 'menu_about') ? 'block' : 'none'; ?>;">
           <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
