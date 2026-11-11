@@ -77,6 +77,7 @@ if ($role === 'Guru') {
       font-family: 'Inter', sans-serif;
       background-color: #f4f6f9;
       color: #333;
+      overflow-x: hidden;
     }
 
     .sidebar {
@@ -86,8 +87,10 @@ if ($role === 'Guru') {
       top: 0;
       left: 0;
       height: 100vh;
+      width: 260px;
       overflow-y: auto;
-      z-index: 1000;
+      z-index: 1045;
+      transition: transform 0.3s ease-in-out;
     }
 
     .sidebar .nav-link-custom {
@@ -117,6 +120,55 @@ if ($role === 'Guru') {
       box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
     }
 
+    .main-content {
+      margin-left: 260px;
+      width: calc(100% - 260px);
+      transition: all 0.3s ease-in-out;
+    }
+
+    .mobile-header {
+      display: none;
+      background: #0d1b2a;
+      color: white;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 1040;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1040;
+    }
+
+    /* Pengaturan Responsif untuk HP Android / Layar Kecil */
+    @media (max-width: 991.98px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+      }
+      .mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .sidebar-overlay.show {
+        display: block;
+      }
+    }
+
     .main-header-card {
       background: #ffffff;
       border-radius: 16px;
@@ -141,32 +193,38 @@ if ($role === 'Guru') {
       vertical-align: middle;
       border-color: #f1f1f1;
     }
-
-    .btn-maroon,
-    .btn-primary-blue {
-      background-color: #1b263b;
-      color: #fff;
-      border: none;
-    }
-
-    .btn-maroon:hover,
-    .btn-primary-blue:hover {
-      background-color: #0d1b2a;
-      color: #fff;
-    }
   </style>
 </head>
 
 <body>
 
-  <div class="container-fluid">
-    <div class="row">
+  <!-- HEADER KHUSUS HP (MOBILE) -->
+  <div class="mobile-header shadow-sm">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-dark text-warning border-0 p-1 fs-4" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+      </button>
+      <h5 class="mb-0 fw-bold fs-6">UKK System</h5>
+    </div>
+    <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-semibold"><?= $role; ?></span>
+  </div>
+
+  <!-- OVERLAY GELAP SAAT SIDEBAR HP DIBUKA -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="container-fluid p-0">
+    <div class="row g-0">
 
       <!-- SIDEBAR -->
-      <div class="col-md-3 col-lg-2 sidebar p-3 text-white">
-        <div class="d-flex align-items-center gap-2 mb-2 px-2 mt-2">
-          <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
-          <h4 class="mb-0 fw-bold fs-5">UKK System</h4>
+      <div class="sidebar p-3 text-white" id="appSidebar">
+        <div class="d-flex align-items-center justify-content-between mb-2 px-2 mt-2">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
+            <h4 class="mb-0 fw-bold fs-5">UKK System</h4>
+          </div>
+          <button class="btn text-white d-lg-none p-0 fs-4" id="sidebarClose">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
 
         <div class="px-2 mb-3">
@@ -198,7 +256,7 @@ if ($role === 'Guru') {
       </div>
 
       <!-- KONTEN UTAMA -->
-      <main class="col-md-9 col-lg-10 p-4 ms-md-auto">
+      <main class="main-content p-3 p-md-4">
 
         <!-- TAB 1: BERANDA GURU / DASHBOARD ADMIN -->
         <div id="tab-dashboard" class="tab-content" style="display: <?= ($active_tab === 'dashboard' || $active_tab === 'menu1') ? 'block' : 'none'; ?>;">
@@ -363,6 +421,23 @@ if ($role === 'Guru') {
       </main>
     </div>
   </div>
+
+  <!-- SCRIPT UNTUK TOGGLE SIDEBAR DI HP -->
+  <script>
+    const sidebar = document.getElementById('appSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const closeBtn = document.getElementById('sidebarClose');
+
+    function toggleSidebar() {
+      sidebar.classList.toggle('show');
+      overlay.classList.toggle('show');
+    }
+
+    if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+    if (overlay) overlay.addEventListener('click', toggleSidebar);
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

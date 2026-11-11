@@ -9,9 +9,15 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
 }
 
 // Ambil ID dari URL
-$id = $_GET['id'] ?? '';
+$id = isset($_GET['id']) ? mysqli_real_escape_string($koneksi, $_GET['id']) : '';
 
 if (!empty($id)) {
+    // Hapus data terkait di tabel lain terlebih dahulu untuk menghindari foreign key constraint error
+    @mysqli_query($koneksi, "DELETE FROM t_kelas_siswa WHERE siswa_id = '$id'");
+    @mysqli_query($koneksi, "DELETE FROM t_pelanggaran_siswa WHERE siswa_id = '$id'");
+    @mysqli_query($koneksi, "DELETE FROM t_tindakan WHERE siswa_id = '$id'");
+
+    // Hapus data utama siswa
     $query = "DELETE FROM t_siswa WHERE id = '$id'";
     if (mysqli_query($koneksi, $query)) {
         echo "<script>
@@ -27,7 +33,7 @@ if (!empty($id)) {
         exit();
     }
 } else {
-    header("Location: dashboard.php?tab=menu4");
+    header("Location: ../dashboard.php?tab=menu4");
     exit();
 }
 ?>

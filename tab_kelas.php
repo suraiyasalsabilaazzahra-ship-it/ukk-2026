@@ -4,14 +4,14 @@ $batas = 10;
 
 // 2. Ambil halaman saat ini dari URL (default ke halaman 1)
 $halaman = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
-$halaman_awal = ($halaman > 1) ? ($halaman * $batas) -$batas : 0;
+$halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
 
 // 3. Ambil kata kunci pencarian jika ada
 $cari = isset($_GET['cari_kelas']) ? mysqli_real_escape_string($koneksi,$_GET['cari_kelas']) : '';
 
 // 4. Hitung total seluruh data kelas
 if (!empty($cari)) {
-    $query_total = mysqli_query($koneksi, "SELECT k.* FROM t_kelas k LEFT JOIN t_guru g ON k.wali_kelas_id = g.id WHERE k.nama LIKE '%$cari%' OR k.jurusan LIKE '%$cari\%' OR g.nama LIKE '\%$cari%'");
+    $query_total = mysqli_query($koneksi, "SELECT k.* FROM t_kelas k LEFT JOIN t_guru g ON k.wali_kelas_id = g.id WHERE k.nama LIKE '%$cari%' OR k.jurusan LIKE '%$cari%' OR g.nama LIKE '%$cari%'");
 } else {
     $query_total = mysqli_query($koneksi, "SELECT * FROM t_kelas");
 }
@@ -56,7 +56,7 @@ $total_halaman = ceil($total_data / $batas);
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          <th width="8%">ID</th>
+          <th width="8%">NO</th>
           <th width="18%">Nama Kelas</th>
           <th width="12%">Tingkat</th>
           <th width="18%">Jurusan</th>
@@ -71,19 +71,22 @@ $total_halaman = ceil($total_data / $batas);
                 FROM t_kelas k 
                 LEFT JOIN t_guru g ON k.wali_kelas_id = g.id";
         
-        if (!empty($cari)) {$sql .= " WHERE k.nama LIKE '%$cari%' OR k.jurusan LIKE '%$cari\%' OR g.nama LIKE '\%$cari%'";
+        if (!empty($cari)) {
+            $sql .= " WHERE k.nama LIKE '%$cari%' OR k.jurusan LIKE '%$cari%' OR g.nama LIKE '%$cari%'";
         }
-        $sql .= " ORDER BY k.id DESC LIMIT $halaman_awal,$batas";
+        $sql .= " ORDER BY k.id DESC LIMIT $halaman_awal, $batas";
 
-        $q_kls = mysqli_query($koneksi,$sql);
+        $q_kls = mysqli_query($koneksi, $sql);
 
         if ($q_kls && mysqli_num_rows($q_kls) > 0) {
-            while ($k = mysqli_fetch_assoc($q_kls)) {$nama_kelas = $k['nama'] ?? $k['nama_kelas'] ?? '-';
+            $no = $halaman_awal + 1; // Inisialisasi nomor urut berdasarkan halaman aktif
+            while ($k = mysqli_fetch_assoc($q_kls)) {
+                $nama_kelas = $k['nama'] ?? $k['nama_kelas'] ?? '-';
                 $nama_wali  = !empty($k['nama_wali']) 
                               ? "<span class='fw-semibold text-dark'><i class='bi bi-person-badge text-warning me-1'></i>{$k['nama_wali']}</span>" 
                               : "<span class='badge bg-secondary-subtle text-muted fw-normal'>Belum Ditentukan</span>";
                 echo "<tr>
-                        <td class='text-muted'>#{$k['id']}</td>
+                        <td class='fw-bold text-muted'>{$no}</td>
                         <td class='fw-semibold'>{$nama_kelas}</td>
                         <td><span class='badge bg-light text-dark border'>Tingkat {$k['tingkat']}</span></td>
                         <td>{$k['jurusan']}</td>
@@ -93,6 +96,7 @@ $total_halaman = ceil($total_data / $batas);
                           <a href='kelas/kelas_hapus.php?id={$k['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus kelas ini?\")'>Hapus</a>
                         </td>
                       </tr>";
+                $no++;
             }
         } else {
             echo "<tr><td colspan='6' class='text-center py-4 text-muted'>Belum ada data kelas ditemukan</td></tr>";
@@ -106,7 +110,7 @@ $total_halaman = ceil($total_data / $batas);
   <?php if ($total_halaman > 1): ?>
   <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
     <small class="text-muted">
-      Menampilkan data ke-<?= ($halaman_awal + 1); ?> sampai <?= min($halaman_awal +$batas, $total_data); ?> dari total <?=$total_data; ?> data
+      Menampilkan data ke-<?= ($halaman_awal + 1); ?> sampai <?= min($halaman_awal + $batas, $total_data); ?> dari total <?= $total_data; ?> data
     </small>
     
     <nav>
@@ -115,11 +119,11 @@ $total_halaman = ceil($total_data / $batas);
           <a class="page-link" href="dashboard.php?tab=menu3&halaman=<?= $halaman - 1; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">Sebelumnya</a>
         </li>
         <?php for ($x = 1; $x <= $total_halaman; $x++): ?>
-          <li class="page-item <?= ($halaman ==$x) ? 'active' : ''; ?>">
-            <a class="page-link" style="<?= ($halaman ==$x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu3&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>"><?= $x; ?></a>
+          <li class="page-item <?= ($halaman == $x) ? 'active' : ''; ?>">
+            <a class="page-link" style="<?= ($halaman == $x) ? 'background-color: #1b263b; color: white;' : ''; ?>" href="dashboard.php?tab=menu3&halaman=<?= $x; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>"><?= $x; ?></a>
           </li>
         <?php endfor; ?>
-        <li class="page-item <?= ($halaman >=$total_halaman) ? 'disabled' : ''; ?>">
+        <li class="page-item <?= ($halaman >= $total_halaman) ? 'disabled' : ''; ?>">
           <a class="page-link" href="dashboard.php?tab=menu3&halaman=<?= $halaman + 1; ?><?= !empty($cari) ? '&cari_kelas='.$cari : ''; ?>">Lanjutkan</a>
         </li>
       </ul>
