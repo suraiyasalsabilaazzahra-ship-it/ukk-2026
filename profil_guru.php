@@ -16,14 +16,22 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     exit();
 }
 
-$user_email = $_SESSION['email'] ?? 'guru@sekolah.sch.id';
-$user_name  = $_SESSION['nama'] ?? 'Budi Santoso, S.Pd.';
+$user_email = $_SESSION['email'] ?? '';
+$user_name  = $_SESSION['nama'] ?? 'Guru Pengajar';
 
-// Cari detail guru dari database
+// Ambil data guru dengan aman
 $guru_data = null;
-$q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru WHERE email = '$user_email' OR nama = '$user_name' LIMIT 1");
-if ($q_guru && mysqli_num_rows($q_guru) > 0) {
-    $guru_data = mysqli_fetch_assoc($q_guru);
+if (!empty($user_email)) {
+    $q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru WHERE email = '$user_email' OR nama = '$user_name' LIMIT 1");
+    if ($q_guru && mysqli_num_rows($q_guru) > 0) {
+        $guru_data = mysqli_fetch_assoc($q_guru);
+    }
+}
+if (!$guru_data) {
+    $q_all = mysqli_query($koneksi, "SELECT * FROM t_guru LIMIT 1");
+    if ($q_all) {
+        $guru_data = mysqli_fetch_assoc($q_all);
+    }
 }
 ?>
 
@@ -63,14 +71,13 @@ if ($q_guru && mysqli_num_rows($q_guru) > 0) {
                   <tr>
                     <td class="text-secondary fw-semibold"><i class="bi bi-card-text me-2 text-muted"></i>NIP / ID Guru</td>
                     <td>:</td>
-                    <td><?= htmlspecialchars($guru_data['nip'] ?? ($guru_data['id'] ?? '19850712 201001 1 003')); ?></td>
+                    <td><?= htmlspecialchars($guru_data['nip'] ?? ($guru_data['id'] ?? '-')); ?></td>
                   </tr>
                   <tr>
                     <td class="text-secondary fw-semibold"><i class="bi bi-envelope me-2 text-muted"></i>Email Akun</td>
                     <td>:</td>
-                    <td><?= htmlspecialchars($guru_data['email'] ?? $user_email); ?></td>
+                    <td><?= htmlspecialchars($guru_data['email'] ?? ($user_email ?: '-')); ?></td>
                   </tr>
-                  <tr>
                   <tr>
                     <td class="text-secondary fw-semibold"><i class="bi bi-shield-lock me-2 text-muted"></i>Hak Akses Sistem</td>
                     <td>:</td>

@@ -35,55 +35,60 @@ if (file_exists('koneksi.php')) {
                   <th class="py-3">NISN</th>
                   <th class="py-3">JENIS PELANGGARAN</th>
                   <th class="py-3 text-center">POIN</th>
+                  <th class="py-3">BENTUK TINDAKAN</th>
                   <th class="py-3">KETERANGAN</th>
                 </tr>
               </thead>
               <tbody>
                 <?php
-                // Ambil data langsung dari tabel transaksi tanpa JOIN yang berisiko gagal
                 $query_rekap = "SELECT * FROM t_pelanggaran_siswa ORDER BY id DESC";
                 $result = mysqli_query($koneksi, $query_rekap);
                 
                 if ($result && mysqli_num_rows($result) > 0) {
                     $no = 1;
                     while ($row = mysqli_fetch_assoc($result)) {
+                        $pelanggaran_id = $row['id'];
                         $tanggal_val = $row['tanggal'] ?? date('Y-m-d');
                         $tanggal_formatted = date('d/m/Y', strtotime($tanggal_val));
                         
-                        // 1. Ambil Nama Siswa & NISN
-                        $nama_s = !empty($row['nama_siswa']) ? $row['nama_siswa'] : '';
+                        $nama_s = '';
                         $nisn_s = '-';
-                        
-                        if (empty($nama_s) && !empty($row['siswa_id'])) {
+                        if (!empty($row['siswa_id'])) {
                             $sid = $row['siswa_id'];
                             $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$sid' LIMIT 1");
                             if ($q_s && $data_s = mysqli_fetch_assoc($q_s)) {
-                                $nama_s = $data_s['nama'] ?? 'Siswa Tidak Ditemukan';
+                                $nama_s = $data_s['nama'] ?? '';
                                 $nisn_s = $data_s['nisn'] ?? '-';
                             }
                         }
                         if (empty($nama_s)) {
-                            $nama_s = 'Siswa Tidak Ditemukan';
+                            $nama_s = $row['nama_siswa'] ?? 'Siswa Tidak Ditemukan';
                         }
 
-                        // 2. Ambil Jenis Pelanggaran & Poin
-                        $nama_p = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : '';
+                        $nama_p = '';
                         $poin_p = $row['poin'] ?? 0;
-
-                        if ((empty($nama_p) || $poin_p == 0) && !empty($row['pelanggaran_kategori_id'])) {
+                        if (!empty($row['pelanggaran_kategori_id'])) {
                             $kid = $row['pelanggaran_kategori_id'];
                             $q_k = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kid' LIMIT 1");
                             if ($q_k && $data_k = mysqli_fetch_assoc($q_k)) {
-                                if (empty($nama_p)) {
-                                    $nama_p = $data_k['nama_kategori'] ?? ($data_k['nama'] ?? 'Pelanggaran Umum');
-                                }
+                                $nama_p = $data_k['nama'] ?? ($data_k['nama_kategori'] ?? '');
                                 if ($poin_p == 0) {
                                     $poin_p = $data_k['poin'] ?? 0;
                                 }
                             }
                         }
                         if (empty($nama_p)) {
-                            $nama_p = 'Pelanggaran Umum';
+                            $nama_p = $row['nama_pelanggaran'] ?? 'Pelanggaran Umum';
+                        }
+
+                        // Ambil bentuk tindakan
+                        $bentuk_tindakan_display = "<span class='badge bg-light text-secondary border'><i class='bi bi-info-circle me-1'></i>Belum ada tindakan</span>";
+                        $q_t = mysqli_query($koneksi, "SELECT bentuk_tindakan FROM t_tindakan WHERE pelanggaran_siswa_id = '$pelanggaran_id' LIMIT 1");
+                        if ($q_t && mysqli_num_rows($q_t) > 0) {
+                            $data_t = mysqli_fetch_assoc($q_t);
+                            if (!empty($data_t['bentuk_tindakan'])) {
+                                $bentuk_tindakan_display = "<span class='badge bg-warning bg-opacity-10 text-dark border border-warning px-2 py-1'><i class='bi bi-clock-history me-1'></i>" . htmlspecialchars($data_t['bentuk_tindakan']) . "</span>";
+                            }
                         }
                         
                         $ket = !empty($row['keterangan']) ? $row['keterangan'] : '-';
@@ -95,14 +100,15 @@ if (file_exists('koneksi.php')) {
                         echo "<td><span class='badge bg-light text-dark border'>" . htmlspecialchars($nisn_s) . "</span></td>";
                         echo "<td>" . htmlspecialchars($nama_p) . "</td>";
                         echo "<td class='text-center'><span class='badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1'>+" . htmlspecialchars($poin_p) . "</span></td>";
+                        echo "<td>{$bentuk_tindakan_display}</td>";
                         echo "<td class='text-muted small'>" . htmlspecialchars($ket) . "</td>";
                         echo "</tr>";
                         $no++;
                     }
                 } else {
-                    echo "<tr><td colspan='7' class='text-center py-4 text-muted'>
+                    echo "<tr><td colspan='8' class='text-center py-4 text-muted'>
                             <i class='bi bi-folder2-open display-6 d-block mb-2'></i>
-                            Belum ada data pelanggaran siswa yang tercatat.
+                            Belum ada data pelanggaran dan tindakan siswa yang tercatat.
                           </td></tr>";
                 }
                 ?>

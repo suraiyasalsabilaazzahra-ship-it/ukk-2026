@@ -3,7 +3,13 @@
 $tgl_mulai   = isset($_GET['tgl_mulai']) ? $_GET['tgl_mulai'] : '';
 $tgl_selesai = isset($_GET['tgl_selesai']) ? $_GET['tgl_selesai'] : '';
 
-$sql_laporan = "SELECT * FROM t_pelanggaran_siswa ORDER BY tanggal DESC, id DESC";
+// Mengambil data pelanggaran dan digabungkan dengan tabel t_tindakan agar bentuk tindakan guru ikut muncul
+$sql_laporan = "SELECT ps.*, 
+                    t.bentuk_tindakan AS t_bentuk 
+             FROM t_pelanggaran_siswa ps
+             LEFT JOIN t_tindakan t ON t.pelanggaran_siswa_id = ps.id
+             ORDER BY ps.tanggal DESC, ps.id DESC";
+
 $query_laporan = mysqli_query($koneksi, $sql_laporan);
 
 $data_laporan = [];
@@ -30,8 +36,8 @@ if ($query_laporan) {
         if (empty($nama_s)) $nama_s = 'Siswa Tidak Ditemukan';
 
         // Kelas Siswa
-        $kelas_Siswa = '-';
-        if (!empty($row['siswa_id'])) {
+        $kelas_Siswa = !empty($row['nama_kelas']) ? $row['nama_kelas'] : '-';
+        if ($kelas_Siswa == '-' && !empty($row['siswa_id'])) {
             $sid = $row['siswa_id'];
             $q_k = mysqli_query($koneksi, "SELECT k.nama FROM t_kelas_siswa ks JOIN t_kelas k ON ks.kelas_id = k.id WHERE ks.siswa_id = '$sid' LIMIT 1");
             if ($q_k && $r_k = mysqli_fetch_assoc($q_k)) {
@@ -60,11 +66,15 @@ if ($query_laporan) {
         }
         if (empty($nama_p)) $nama_p = 'Pelanggaran Umum';
 
+        // Bentuk Tindakan dari Guru atau kolom tindakan
+        $bentuk_tindakan = !empty($row['t_bentuk']) ? $row['t_bentuk'] : ($row['tindakan'] ?? '');
+
         $row['computed_nama_siswa'] = $nama_s;
         $row['computed_nisn'] = $nisn_s;
         $row['computed_kelas'] = $kelas_Siswa;
         $row['computed_nama_pelanggaran'] = $nama_p;
         $row['computed_poin'] = $poin_p;
+        $row['computed_tindakan'] = $bentuk_tindakan;
 
         $data_laporan[] = $row;
     }
@@ -130,7 +140,7 @@ if ($query_laporan) {
           <th class="py-3 px-3 text-center" style="width: 5%;">NO</th>
           <th class="py-3">NAMA SISWA</th>
           <th class="py-3">KELAS</th>
-          <th class="py-3">JENIS PELANGGARAN</th>
+          <th class="py-3">JENIS PELANGGARAN & TINDAKAN</th>
           <th class="py-3 text-center" style="width: 15%;">TANGGAL</th>
           <th class="py-3 text-center" style="width: 12%;">POIN</th>
         </tr>
@@ -151,6 +161,9 @@ if ($query_laporan) {
               <td><span class="fw-semibold text-dark"><?= htmlspecialchars($row['computed_kelas']); ?></span></td>
               <td>
                 <span class="fw-medium text-dark"><?= htmlspecialchars($row['computed_nama_pelanggaran']); ?></span>
+                <?php if (!empty($row['computed_tindakan'])): ?>
+                  <br><small class="text-primary fw-semibold"><i class="bi bi-shield-check me-1"></i>Tindakan: <?= htmlspecialchars($row['computed_tindakan']); ?></small>
+                <?php endif; ?>
                 <?php if (!empty($row['keterangan'])): ?>
                   <br><small class="text-muted">Ket: <?= htmlspecialchars($row['keterangan']); ?></small>
                 <?php endif; ?>

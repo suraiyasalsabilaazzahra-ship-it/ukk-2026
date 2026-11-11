@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 09, 2026 at 02:49 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- Waktu pembuatan: 11 Nov 2026 pada 05.31
+-- Versi server: 10.4.32-MariaDB
+-- Versi PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,7 +24,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_guru`
+-- Struktur dari tabel `t_guru`
 --
 
 CREATE TABLE `t_guru` (
@@ -39,7 +39,7 @@ CREATE TABLE `t_guru` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_guru`
+-- Dumping data untuk tabel `t_guru`
 --
 
 INSERT INTO `t_guru` (`id`, `nip`, `nama`, `email`, `status_aktif`, `user_id`, `created_at`, `updated_at`) VALUES
@@ -102,7 +102,7 @@ INSERT INTO `t_guru` (`id`, `nip`, `nama`, `email`, `status_aktif`, `user_id`, `
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_kelas`
+-- Struktur dari tabel `t_kelas`
 --
 
 CREATE TABLE `t_kelas` (
@@ -117,7 +117,7 @@ CREATE TABLE `t_kelas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_kelas`
+-- Dumping data untuk tabel `t_kelas`
 --
 
 INSERT INTO `t_kelas` (`id`, `wali_kelas_id`, `nama`, `tingkat`, `jurusan`, `status_aktif`, `created_at`, `updated_at`) VALUES
@@ -178,7 +178,7 @@ INSERT INTO `t_kelas` (`id`, `wali_kelas_id`, `nama`, `tingkat`, `jurusan`, `sta
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_kelas_siswa`
+-- Struktur dari tabel `t_kelas_siswa`
 --
 
 CREATE TABLE `t_kelas_siswa` (
@@ -194,7 +194,7 @@ CREATE TABLE `t_kelas_siswa` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_kelas_siswa`
+-- Dumping data untuk tabel `t_kelas_siswa`
 --
 
 INSERT INTO `t_kelas_siswa` (`id`, `siswa_id`, `tahun_ajaran_id`, `kelas_id`, `tanggal_mulai`, `tanggal_selesai`, `status_aktif`, `created_at`, `updated_at`) VALUES
@@ -271,7 +271,7 @@ INSERT INTO `t_kelas_siswa` (`id`, `siswa_id`, `tahun_ajaran_id`, `kelas_id`, `t
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_pelanggaran`
+-- Struktur dari tabel `t_pelanggaran`
 --
 
 CREATE TABLE `t_pelanggaran` (
@@ -287,40 +287,10 @@ CREATE TABLE `t_pelanggaran` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_pelanggaran`
+-- Dumping data untuk tabel `t_pelanggaran`
 --
 
 INSERT INTO `t_pelanggaran` (`id`, `pelanggaran_kategori_id`, `kode`, `nama`, `poin`, `deskripsi`, `status_aktif`, `created_at`, `updated_at`) VALUES
-(1, 1, 'PLG-001', 'Datang Terlambat < 15 Menit', 5, 'Siswa terlambat datang ke sekolah kurang dari 15 menit', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(2, 1, 'PLG-002', 'Datang Terlambat > 15 Menit', 10, 'Siswa terlambat datang lebih dari 15 menit', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(3, 1, 'PLG-003', 'Alpa / Tidak Hadir Tanpa Keterangan', 15, 'Siswa tidak masuk sekolah tanpa surat izin', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(4, 2, 'PLG-004', 'Atribut Seragam Tidak Lengkap', 5, 'Tidak memakai dasi/sabuk/kaos kaki sesuai ketentuan', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(5, 2, 'PLG-005', 'Seragam Tidak Sesuai Hari', 10, 'Memakai seragam yang salah pada hari jadwalnya', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(6, 2, 'PLG-006', 'Rambut Panjang / Tidak Rapi (Putra)', 10, 'Ukuran rambut melebihi batas ketentuan sekolah', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(7, 3, 'PLG-007', 'Meninggalkan Kelas Saat Jam Pelajaran', 15, 'Bolos kelas saat KBM berlangsung', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(8, 3, 'PLG-008', 'Tidak Mengumpulkan Tugas', 5, 'Tidak mengerjakan tugas dari guru mapel', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(9, 4, 'PLG-009', 'Berkata Kasar / Tidak Sopan', 10, 'Ucap kata tidak pantas di lingkungan sekolah', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(10, 5, 'PLG-010', 'Main Game Saat Jam Pelajaran', 10, 'Menggunakan HP untuk game tanpa izin guru', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(11, 6, 'PLG-011', 'Membuang Sampah Sembarangan', 5, 'Membuang sampah bukan pada tempatnya', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(12, 7, 'PLG-012', 'Membawa Rokok / Vape', 25, 'Ketahuan membawa rokok atau vape ke sekolah', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(13, 7, 'PLG-013', 'Merokok / Vape di Sekolah', 50, 'Merokok atau menggunakan vape di area sekolah', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(14, 9, 'PLG-014', 'Melakukan Bullying Verbal', 30, 'Melakukan perundungan secara lisan ke teman', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(15, 9, 'PLG-015', 'Melakukan Perkelahian', 75, 'Terlibat kontak fisik/berkelahi di sekolah', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(16, 8, 'PLG-016', 'Membawa Miras', 100, 'Membawa minuman keras ke sekolah', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(17, 1, 'PLG-017', 'Melompat Pagar Sekolah', 25, 'Kabur dari sekolah dengan memanjat pagar', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(18, 2, 'PLG-018', 'Memakai Perhiasan Berlebihan', 5, 'Siswa memakai perhiasan tidak wajar', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(19, 2, 'PLG-019', 'Mewarnai Rambut', 15, 'Mengecat rambut selain warna hitam', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(20, 6, 'PLG-020', 'Mencoret Fasilitas Sekolah', 20, 'Coret-coret meja, kursi, atau tembok', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(21, 1, 'PLG-021', 'Pelanggaran Poin 21', 5, 'Deskripsi pelanggaran 21', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(22, 2, 'PLG-022', 'Pelanggaran Poin 22', 10, 'Deskripsi pelanggaran 22', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(23, 3, 'PLG-023', 'Pelanggaran Poin 23', 15, 'Deskripsi pelanggaran 23', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(24, 4, 'PLG-024', 'Pelanggaran Poin 24', 20, 'Deskripsi pelanggaran 24', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(25, 5, 'PLG-025', 'Pelanggaran Poin 25', 25, 'Deskripsi pelanggaran 25', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(26, 6, 'PLG-026', 'Pelanggaran Poin 26', 30, 'Deskripsi pelanggaran 26', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(27, 7, 'PLG-027', 'Pelanggaran Poin 27', 35, 'Deskripsi pelanggaran 27', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(28, 8, 'PLG-028', 'Pelanggaran Poin 28', 40, 'Deskripsi pelanggaran 28', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(29, 9, 'PLG-029', 'Pelanggaran Poin 29', 45, 'Deskripsi pelanggaran 29', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
-(30, 10, 'PLG-030', 'Pelanggaran Poin 30', 50, 'Deskripsi pelanggaran 30', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
 (31, 11, 'PLG-031', 'Pelanggaran Poin 31', 5, 'Deskripsi pelanggaran 31', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
 (32, 12, 'PLG-032', 'Pelanggaran Poin 32', 10, 'Deskripsi pelanggaran 32', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
 (33, 13, 'PLG-033', 'Pelanggaran Poin 33', 15, 'Deskripsi pelanggaran 33', 1, '2026-09-23 03:40:52', '2026-09-23 03:40:52'),
@@ -345,7 +315,7 @@ INSERT INTO `t_pelanggaran` (`id`, `pelanggaran_kategori_id`, `kode`, `nama`, `p
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_pelanggaran_kategori`
+-- Struktur dari tabel `t_pelanggaran_kategori`
 --
 
 CREATE TABLE `t_pelanggaran_kategori` (
@@ -362,20 +332,10 @@ CREATE TABLE `t_pelanggaran_kategori` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_pelanggaran_kategori`
+-- Dumping data untuk tabel `t_pelanggaran_kategori`
 --
 
 INSERT INTO `t_pelanggaran_kategori` (`id`, `nama`, `siswa_id`, `pelanggaran_kategori_id`, `poin`, `tanggal`, `deskripsi`, `status_aktif`, `created_at`, `updated_at`) VALUES
-(1, 'Kerajinan', 0, 0, 0, '2026-11-04 09:58:13', 'Pelanggaran terkait tingkat kehadiran dan keterlambatan', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(2, 'Kerapihan', 0, 0, 0, '2026-11-04 09:58:13', 'Pelanggaran pakaian, seragam, dan penampilan fisik', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(3, 'Kedisiplinan', 0, 0, 0, '2026-11-04 09:58:13', 'Pelanggaran aturan umum sekolah', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(4, 'Etika & Sopan Santun', 0, 0, 0, '2026-11-04 09:58:13', 'Pelanggaran perilaku kepada guru/teman', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(5, 'Ketertiban', 0, 0, 0, '2026-11-04 09:58:13', 'Pelanggaran ketenangan lingkungan belajar', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(6, 'Penggunaan Barang', 0, 0, 0, '2026-11-04 09:58:13', 'Membawa/menggunakan barang terlarang di sekolah', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(7, 'Pelanggaran Berat', 0, 0, 0, '2026-11-04 09:58:13', 'Tindakan pidana, rokok, miras, judi, narkoba', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(8, 'Kategori 8', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 8', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(9, 'Kategori 9', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 9', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(10, 'Kategori 10', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 10', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (11, 'Kategori 11', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 11', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (12, 'Kategori 12', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 12', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (13, 'Kategori 13', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 13', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
@@ -399,17 +359,15 @@ INSERT INTO `t_pelanggaran_kategori` (`id`, `nama`, `siswa_id`, `pelanggaran_kat
 (31, 'Kategori 31', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 31', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (32, 'Kategori 32', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 32', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (33, 'Kategori 33', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 33', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(34, 'Kategori 34', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 34', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(35, 'Kategori 35', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 35', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(36, 'Kategori 36', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 36', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(37, 'Kategori 37', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 37', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(38, 'Kategori 38', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 38', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(39, 'Kategori 39', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 39', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(40, 'Kategori 40', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 40', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(41, 'Kategori 41', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 41', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(42, 'Kategori 42', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 42', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(43, 'Kategori 43', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 43', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
-(44, 'Kategori 44', 0, 0, 0, '2026-11-04 09:58:13', 'Deskripsi Kategori Pelanggaran 44', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(36, 'Memalsukan tanda tangan orang tua/wali atau guru', 0, 0, 55, '2026-11-11 11:15:31', 'Memalsukan tanda tangan orang tua/wali atau guru', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(37, 'Membawa senjata tajam atau barang terlarang', 0, 0, 100, '2026-11-11 11:15:14', 'Membawa senjata tajam atau barang terlarang', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(38, 'Mencuri barang milik teman, guru, atau sekolah', 0, 0, 85, '2026-11-11 11:14:58', 'Mencuri barang milik teman, guru, atau sekolah di lingkungan sekolah', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(39, 'Berkelahi / melakukan tindakan kekerasan / perundungan', 0, 0, 80, '2026-11-11 11:14:33', 'Berkelahi / melakukan tindakan kekerasan / perundungan', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(40, 'Merokok atau membawa vape di lingkungan sekolah', 0, 0, 60, '2026-11-11 11:14:08', 'Merokok di lingkungan sekolah', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(41, 'Membawa atau menggunakan gawai/HP saat jam pelajaran', 0, 0, 35, '2026-11-11 11:13:47', 'memainkan hp / gawai saat pembelajaran sedang berlangsung', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(42, 'Membuat keributan saat KBM berlangsung', 0, 0, 25, '2026-11-11 11:13:16', 'Membuat keributan saat kegiatan belajar mengajar dan menggangu', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(43, 'Membuang sampah sembarangan / merusak fasilitas ringan', 0, 0, 30, '2026-11-11 11:12:29', 'membuang sampah sembarangan di lingkungan sekolah dan merusak fasilitas sekolah', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
+(44, 'Tidak mengikuti kegiatan upacara sekolah wajib', 0, 0, 20, '2026-11-11 11:11:33', 'Tidak mengikuti upcara ', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (45, 'Membolos / keluar sekolah saat jam pelajaran', 0, 0, 25, '2026-11-05 07:35:58', 'membolos / keluar kelas sebelum mata pelajaran selesai', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (46, 'Masuk kelas/ruangan tanpa izin guru', 0, 0, 15, '2026-11-05 07:34:46', 'Masuk kelas / ruangan tanpa izin guru', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
 (47, 'Rambut / Kuku tidak rapi', 0, 0, 10, '2026-11-05 07:34:09', 'Tidak memotong kuku dan merapikan rambut(gondrong)', 1, '2026-09-23 03:02:34', '2026-09-23 03:02:34'),
@@ -421,7 +379,7 @@ INSERT INTO `t_pelanggaran_kategori` (`id`, `nama`, `siswa_id`, `pelanggaran_kat
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_pelanggaran_siswa`
+-- Struktur dari tabel `t_pelanggaran_siswa`
 --
 
 CREATE TABLE `t_pelanggaran_siswa` (
@@ -446,16 +404,16 @@ CREATE TABLE `t_pelanggaran_siswa` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_pelanggaran_siswa`
+-- Dumping data untuk tabel `t_pelanggaran_siswa`
 --
 
 INSERT INTO `t_pelanggaran_siswa` (`id`, `tahun_ajaran_id`, `siswa_id`, `nama_siswa`, `kelas_id`, `nama_kelas`, `pelanggaran_id`, `nama_pelanggaran`, `pelanggaran_kategori_id`, `guru_id`, `nama_guru`, `tanggal`, `keterangan`, `poin`, `tindakan`, `status`, `created_at`, `updated_at`) VALUES
-(2, NULL, 1, '', NULL, '', NULL, '', 51, NULL, '', '2026-11-05', 'terlambat 10 menit', 5, '', '', '2026-11-05 00:29:44', '2026-11-05 00:29:44');
+(0, NULL, 59, ' Rasya Abdul Basith', 53, 'XII TKR 3', NULL, 'Terlambat datang ke sekolah', 51, NULL, 'Aldi Maulana, S.Pd', '2026-11-11', 'terlambat 10 menit', 5, 'Menunggu 45 menit di luar kelas sebelum masuk', 'Aktif', '2026-11-11 04:04:32', '2026-11-11 04:04:32');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_siswa`
+-- Struktur dari tabel `t_siswa`
 --
 
 CREATE TABLE `t_siswa` (
@@ -475,7 +433,7 @@ CREATE TABLE `t_siswa` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_siswa`
+-- Dumping data untuk tabel `t_siswa`
 --
 
 INSERT INTO `t_siswa` (`id`, `nis`, `nisn`, `nama`, `kelas`, `kelas_id`, `jurusan`, `jenis_kelamin`, `tanggal_lahir`, `alamat`, `status_aktif`, `created_at`, `updated_at`) VALUES
@@ -552,7 +510,7 @@ INSERT INTO `t_siswa` (`id`, `nis`, `nisn`, `nama`, `kelas`, `kelas_id`, `jurusa
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_tahun_ajaran`
+-- Struktur dari tabel `t_tahun_ajaran`
 --
 
 CREATE TABLE `t_tahun_ajaran` (
@@ -566,7 +524,7 @@ CREATE TABLE `t_tahun_ajaran` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_tahun_ajaran`
+-- Dumping data untuk tabel `t_tahun_ajaran`
 --
 
 INSERT INTO `t_tahun_ajaran` (`id`, `nama`, `tanggal_mulai`, `tanggal_selesai`, `status`, `created_at`, `updated_at`) VALUES
@@ -625,7 +583,29 @@ INSERT INTO `t_tahun_ajaran` (`id`, `nama`, `tanggal_mulai`, `tanggal_selesai`, 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_users`
+-- Struktur dari tabel `t_tindakan`
+--
+
+CREATE TABLE `t_tindakan` (
+  `id` int(11) NOT NULL,
+  `siswa_id` int(11) DEFAULT NULL,
+  `pelanggaran_siswa_id` int(11) DEFAULT NULL,
+  `bentuk_tindakan` text DEFAULT NULL,
+  `tanggal_tindakan` date DEFAULT NULL,
+  `status_penyelesaian` varchar(50) DEFAULT 'Diproses'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `t_tindakan`
+--
+
+INSERT INTO `t_tindakan` (`id`, `siswa_id`, `pelanggaran_siswa_id`, `bentuk_tindakan`, `tanggal_tindakan`, `status_penyelesaian`) VALUES
+(1, 59, 0, 'Menunggu 45 menit di luar kelas sebelum masuk', '2026-11-11', 'Diproses');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `t_users`
 --
 
 CREATE TABLE `t_users` (
@@ -641,7 +621,7 @@ CREATE TABLE `t_users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_users`
+-- Dumping data untuk tabel `t_users`
 --
 
 INSERT INTO `t_users` (`id`, `nama`, `email`, `email_verified_at`, `password`, `remember_token`, `role`, `created_at`, `updated_at`) VALUES
@@ -704,7 +684,7 @@ INSERT INTO `t_users` (`id`, `nama`, `email`, `email_verified_at`, `password`, `
 -- --------------------------------------------------------
 
 --
--- Table structure for table `t_wali_kelas`
+-- Struktur dari tabel `t_wali_kelas`
 --
 
 CREATE TABLE `t_wali_kelas` (
@@ -720,7 +700,7 @@ CREATE TABLE `t_wali_kelas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `t_wali_kelas`
+-- Dumping data untuk tabel `t_wali_kelas`
 --
 
 INSERT INTO `t_wali_kelas` (`id`, `tahun_ajaran_id`, `kelas_id`, `guru_id`, `tanggal_mulai`, `tanggal_selesai`, `status_aktif`, `created_at`, `updated_at`) VALUES
@@ -734,20 +714,20 @@ INSERT INTO `t_wali_kelas` (`id`, `tahun_ajaran_id`, `kelas_id`, `guru_id`, `tan
 --
 
 --
--- Indexes for table `t_guru`
+-- Indeks untuk tabel `t_guru`
 --
 ALTER TABLE `t_guru`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `t_kelas`
+-- Indeks untuk tabel `t_kelas`
 --
 ALTER TABLE `t_kelas`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `t_kelas_siswa`
+-- Indeks untuk tabel `t_kelas_siswa`
 --
 ALTER TABLE `t_kelas_siswa`
   ADD PRIMARY KEY (`id`),
@@ -756,20 +736,20 @@ ALTER TABLE `t_kelas_siswa`
   ADD KEY `siswa_id` (`siswa_id`);
 
 --
--- Indexes for table `t_pelanggaran`
+-- Indeks untuk tabel `t_pelanggaran`
 --
 ALTER TABLE `t_pelanggaran`
   ADD PRIMARY KEY (`id`),
   ADD KEY `pelanggaran_kategori_id` (`pelanggaran_kategori_id`);
 
 --
--- Indexes for table `t_pelanggaran_kategori`
+-- Indeks untuk tabel `t_pelanggaran_kategori`
 --
 ALTER TABLE `t_pelanggaran_kategori`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `t_pelanggaran_siswa`
+-- Indeks untuk tabel `t_pelanggaran_siswa`
 --
 ALTER TABLE `t_pelanggaran_siswa`
   ADD PRIMARY KEY (`id`),
@@ -781,25 +761,31 @@ ALTER TABLE `t_pelanggaran_siswa`
   ADD KEY `guru_id` (`guru_id`);
 
 --
--- Indexes for table `t_siswa`
+-- Indeks untuk tabel `t_siswa`
 --
 ALTER TABLE `t_siswa`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `t_tahun_ajaran`
+-- Indeks untuk tabel `t_tahun_ajaran`
 --
 ALTER TABLE `t_tahun_ajaran`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `t_users`
+-- Indeks untuk tabel `t_tindakan`
+--
+ALTER TABLE `t_tindakan`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indeks untuk tabel `t_users`
 --
 ALTER TABLE `t_users`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `t_wali_kelas`
+-- Indeks untuk tabel `t_wali_kelas`
 --
 ALTER TABLE `t_wali_kelas`
   ADD PRIMARY KEY (`id`),
@@ -808,27 +794,33 @@ ALTER TABLE `t_wali_kelas`
   ADD KEY `tahun_ajaran_id` (`tahun_ajaran_id`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT untuk tabel yang dibuang
 --
 
 --
--- AUTO_INCREMENT for table `t_kelas_siswa`
+-- AUTO_INCREMENT untuk tabel `t_kelas_siswa`
 --
 ALTER TABLE `t_kelas_siswa`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
--- AUTO_INCREMENT for table `t_users`
+-- AUTO_INCREMENT untuk tabel `t_tindakan`
+--
+ALTER TABLE `t_tindakan`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT untuk tabel `t_users`
 --
 ALTER TABLE `t_users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
--- Constraints for dumped tables
+-- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
 --
 
 --
--- Constraints for table `t_kelas_siswa`
+-- Ketidakleluasaan untuk tabel `t_kelas_siswa`
 --
 ALTER TABLE `t_kelas_siswa`
   ADD CONSTRAINT `t_kelas_siswa_ibfk_1` FOREIGN KEY (`kelas_id`) REFERENCES `t_kelas` (`id`) ON UPDATE CASCADE,
@@ -836,13 +828,13 @@ ALTER TABLE `t_kelas_siswa`
   ADD CONSTRAINT `t_kelas_siswa_ibfk_3` FOREIGN KEY (`tahun_ajaran_id`) REFERENCES `t_tahun_ajaran` (`id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `t_pelanggaran`
+-- Ketidakleluasaan untuk tabel `t_pelanggaran`
 --
 ALTER TABLE `t_pelanggaran`
   ADD CONSTRAINT `t_pelanggaran_ibfk_1` FOREIGN KEY (`pelanggaran_kategori_id`) REFERENCES `t_pelanggaran_kategori` (`id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `t_pelanggaran_siswa`
+-- Ketidakleluasaan untuk tabel `t_pelanggaran_siswa`
 --
 ALTER TABLE `t_pelanggaran_siswa`
   ADD CONSTRAINT `t_pelanggaran_siswa_ibfk_1` FOREIGN KEY (`guru_id`) REFERENCES `t_guru` (`id`) ON UPDATE CASCADE,
@@ -853,7 +845,7 @@ ALTER TABLE `t_pelanggaran_siswa`
   ADD CONSTRAINT `t_pelanggaran_siswa_ibfk_6` FOREIGN KEY (`tahun_ajaran_id`) REFERENCES `t_tahun_ajaran` (`id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `t_wali_kelas`
+-- Ketidakleluasaan untuk tabel `t_wali_kelas`
 --
 ALTER TABLE `t_wali_kelas`
   ADD CONSTRAINT `t_wali_kelas_ibfk_1` FOREIGN KEY (`guru_id`) REFERENCES `t_guru` (`id`) ON UPDATE CASCADE,

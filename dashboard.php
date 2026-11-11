@@ -342,7 +342,7 @@ if ($role === 'Guru') {
                       <tr>
                         <th class="text-muted">Sekolah</th>
                         <td>:</td>
-                        <td>SMK Negeri / Swasta</td>
+                        <td>SMK Muhammadiyah kota Tasikmalaya</td>
                       </tr>
                       <tr>
                         <th class="text-muted">Judul Proyek</th>
