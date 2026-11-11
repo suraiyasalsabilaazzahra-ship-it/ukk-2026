@@ -27,10 +27,10 @@ if (!$current) {
 $q_kls_curr = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE id = '{$current['kelas_id']}'");
 $d_kls_curr = mysqli_fetch_assoc($q_kls_curr);
 $raw_curr_tingkat = trim($d_kls_curr['tingkat'] ?? '');
-$curr_tingkat = $raw_curr_tingkat;
-if (strtoupper($raw_curr_tingkat) == 'X' || $raw_curr_tingkat == '10') $curr_tingkat = '10';
-if (strtoupper($raw_curr_tingkat) == 'XI' || $raw_curr_tingkat == '11') $curr_tingkat = '11';
-if (strtoupper($raw_curr_tingkat) == 'XII' || $raw_curr_tingkat == '12') $curr_tingkat = '12';
+$curr_tingkat = strtoupper($raw_curr_tingkat);
+if ($raw_curr_tingkat == '10') $curr_tingkat = 'X';
+if ($raw_curr_tingkat == '11') $curr_tingkat = 'XI';
+if ($raw_curr_tingkat == '12') $curr_tingkat = 'XII';
 
 $curr_nama_kelas = $d_kls_curr['nama'] ?? '';
 $tahun_sekarang = date('Y'); // 2026
@@ -41,11 +41,23 @@ if (isset($_POST['update'])) {
     $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
     $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id'] ?? '');
     $tingkat_pilih   = mysqli_real_escape_string($koneksi, $_POST['tingkat_pilih'] ?? '');
-    $jurusan_pilih   = mysqli_real_escape_string($koneksi, $_POST['jurusan_pilih'] ?? '');
+    $kelas_pilih     = mysqli_real_escape_string($koneksi, $_POST['jurusan_pilih'] ?? '');
     $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
-    if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($tingkat_pilih) && !empty($jurusan_pilih)) {
-        $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$jurusan_pilih' OR id = '$jurusan_pilih') LIMIT 1");
+    if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($tingkat_pilih) && !empty($kelas_pilih)) {
+        
+        $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas 
+            WHERE (nama = '$kelas_pilih' OR id = '$kelas_pilih') 
+            AND (tingkat = '$tingkat_pilih' OR tingkat = 
+                CASE 
+                    WHEN '$tingkat_pilih' = 'X' THEN '10'
+                    WHEN '$tingkat_pilih' = 'XI' THEN '11'
+                    WHEN '$tingkat_pilih' = 'XII' THEN '12'
+                    WHEN '$tingkat_pilih' = '10' THEN 'X'
+                    WHEN '$tingkat_pilih' = '11' THEN 'XI'
+                    WHEN '$tingkat_pilih' = '12' THEN 'XII'
+                    ELSE ''
+                END) LIMIT 1");
         
         if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
             $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
@@ -157,9 +169,9 @@ if (isset($_POST['update'])) {
                     <label class="form-label fw-bold">Tingkat Kelas</label>
                     <select name="tingkat_pilih" id="tingkatPilih" class="form-select" required onchange="filterKelasByTingkat()">
                       <option value="">-- Pilih Tingkat --</option>
-                      <option value="10" <?= ($curr_tingkat == '10') ? 'selected' : ''; ?>>10 (X)</option>
-                      <option value="11" <?= ($curr_tingkat == '11') ? 'selected' : ''; ?>>11 (XI)</option>
-                      <option value="12" <?= ($curr_tingkat == '12') ? 'selected' : ''; ?>>12 (XII)</option>
+                      <option value="X" <?= ($curr_tingkat == 'X') ? 'selected' : ''; ?>>X (10)</option>
+                      <option value="XI" <?= ($curr_tingkat == 'XI') ? 'selected' : ''; ?>>XI (11)</option>
+                      <option value="XII" <?= ($curr_tingkat == 'XII') ? 'selected' : ''; ?>>XII (12)</option>
                     </select>
                   </div>
 
@@ -176,9 +188,9 @@ if (isset($_POST['update'])) {
                   <select name="tahun_ajaran_id" class="form-select" required>
                     <option value="">-- Pilih Tahun Ajaran --</option>
                     <?php
-                    $q_ta = mysqli_query($koneksi, "SELECT DISTINCT * FROM t_tahun_ajaran WHERE nama LIKE '%$tahun_sekarang%' OR nama LIKE '%" . ($tahun_sekarang - 1) . "%' ORDER BY nama DESC");
+                    $q_ta = mysqli_query($koneksi, "SELECT MIN(id) as id, nama FROM t_tahun_ajaran WHERE nama LIKE '%$tahun_sekarang%' OR nama LIKE '%" . ($tahun_sekarang - 1) . "%' GROUP BY nama ORDER BY nama DESC");
                     if (mysqli_num_rows($q_ta) == 0) {
-                        $q_ta = mysqli_query($koneksi, "SELECT DISTINCT * FROM t_tahun_ajaran ORDER BY nama DESC LIMIT 3");
+                        $q_ta = mysqli_query($koneksi, "SELECT MIN(id) as id, nama FROM t_tahun_ajaran GROUP BY nama ORDER BY nama DESC LIMIT 3");
                     }
                     while ($ta = mysqli_fetch_assoc($q_ta)) {
                         $selected = ($ta['id'] == $current['tahun_ajaran_id']) ? 'selected' : '';
@@ -215,10 +227,10 @@ if (isset($_POST['update'])) {
       $q_all_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
       while ($dk = mysqli_fetch_assoc($q_all_kelas)) {
           $raw_tingkat = trim($dk['tingkat']);
-          $norm_tingkat = $raw_tingkat;
-          if (strtoupper($raw_tingkat) == 'X' || $raw_tingkat == '10') $norm_tingkat = '10';
-          if (strtoupper($raw_tingkat) == 'XI' || $raw_tingkat == '11') $norm_tingkat = '11';
-          if (strtoupper($raw_tingkat) == 'XII' || $raw_tingkat == '12') $norm_tingkat = '12';
+          $norm_tingkat = strtoupper($raw_tingkat);
+          if ($raw_tingkat == '10') $norm_tingkat = 'X';
+          if ($raw_tingkat == '11') $norm_tingkat = 'XI';
+          if ($raw_tingkat == '12') $norm_tingkat = 'XII';
           
           echo "{ id: '{$dk['id']}', tingkat: '{$norm_tingkat}', nama: '" . addslashes($dk['nama']) . "' },\n";
       }
@@ -252,7 +264,7 @@ if (isset($_POST['update'])) {
       }
     }
 
-    // Jalankan otomatis saat halaman dimuat untuk memunculkan data kelas yang sudah terpilih sebelumnya
+    // Auto load data kelas saat halaman edit dimuat
     window.onload = function() {
       let currentKelas = "<?= addslashes($curr_nama_kelas); ?>";
       if (document.getElementById('tingkatPilih').value !== '') {
