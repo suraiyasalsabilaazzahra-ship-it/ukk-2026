@@ -23,46 +23,58 @@ if (!$current) {
     exit();
 }
 
-// Ambil tingkat dan jurusan kelas saat ini
+// Ambil tingkat dan nama kelas saat ini
 $q_kls_curr = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE id = '{$current['kelas_id']}'");
 $d_kls_curr = mysqli_fetch_assoc($q_kls_curr);
-$curr_tingkat = $d_kls_curr['tingkat'] ?? '';
-$curr_jurusan = $d_kls_curr['jurusan'] ?? '';
+$raw_curr_tingkat = trim($d_kls_curr['tingkat'] ?? '');
+$curr_tingkat = $raw_curr_tingkat;
+if (strtoupper($raw_curr_tingkat) == 'X' || $raw_curr_tingkat == '10') $curr_tingkat = '10';
+if (strtoupper($raw_curr_tingkat) == 'XI' || $raw_curr_tingkat == '11') $curr_tingkat = '11';
+if (strtoupper($raw_curr_tingkat) == 'XII' || $raw_curr_tingkat == '12') $curr_tingkat = '12';
+
+$curr_nama_kelas = $d_kls_curr['nama'] ?? '';
+$tahun_sekarang = date('Y'); // 2026
 
 $error = "";
 
 if (isset($_POST['update'])) {
     $guru_id         = mysqli_real_escape_string($koneksi, $_POST['guru_id'] ?? '');
     $tingkat_pilih   = mysqli_real_escape_string($koneksi, $_POST['tingkat_pilih'] ?? '');
-    $jurusan_pilih   = mysqli_real_escape_string($koneksi, $_POST['jurusan_pilih'] ?? '');
+    $kelas_pilih     = mysqli_real_escape_string($koneksi, $_POST['kelas_pilih'] ?? '');
     $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id'] ?? '');
     $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
-    if (!empty($guru_id) && !empty($tingkat_pilih) && !empty($jurusan_pilih) && !empty($tahun_ajaran_id)) {
+    if (!empty($guru_id) && !empty($tingkat_pilih) && !empty($kelas_pilih) && !empty($tahun_ajaran_id)) {
         
         // Cek apakah guru sudah terdaftar di kelas lain pada tahun ajaran yang sama (kecuali datanya sendiri)
         $cek_guru = mysqli_query($koneksi, "SELECT * FROM t_wali_kelas WHERE guru_id = '$guru_id' AND tahun_ajaran_id = '$tahun_ajaran_id' AND id != '$id' LIMIT 1");
         if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
             $error = "Gagal! Guru tersebut sudah bertugas sebagai wali kelas di kelas lain pada tahun ajaran ini.";
         } else {
-            // Cari ID kelas berdasarkan pilihan baru
-            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND jurusan = '$jurusan_pilih' LIMIT 1");
+            // Cari ID kelas berdasarkan tingkat dan nama kelas baru
+            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$kelas_pilih' OR id = '$kelas_pilih') LIMIT 1");
             
             if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
                 $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
                 $kelas_id = $d_kelas['id'];
 
-                $query = "UPDATE t_wali_kelas SET guru_id = '$guru_id', kelas_id = '$kelas_id', tahun_ajaran_id = '$tahun_ajaran_id', status_aktif = '$status_aktif' WHERE id = '$id'";
-                $result = mysqli_query($koneksi, $query);
-
-                if ($result) {
-                    echo "<script>alert('Data wali kelas berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu8';</script>";
-                    exit();
+                // Cek apakah kelas tersebut sudah punya wali kelas lain (kecuali data ini sendiri)
+                $cek_kelas_wk = mysqli_query($koneksi, "SELECT * FROM t_wali_kelas WHERE kelas_id = '$kelas_id' AND tahun_ajaran_id = '$tahun_ajaran_id' AND id != '$id' LIMIT 1");
+                if ($cek_kelas_wk && mysqli_num_rows($cek_kelas_wk) > 0) {
+                    $error = "Gagal! Kelas tersebut sudah memiliki wali kelas pada tahun ajaran ini.";
                 } else {
-                    $error = "Gagal memperbarui data wali kelas: " . mysqli_error($koneksi);
+                    $query = "UPDATE t_wali_kelas SET guru_id = '$guru_id', kelas_id = '$kelas_id', tahun_ajaran_id = '$tahun_ajaran_id', status_aktif = '$status_aktif' WHERE id = '$id'";
+                    $result = mysqli_query($koneksi, $query);
+
+                    if ($result) {
+                        echo "<script>alert('Data wali kelas berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu8';</script>";
+                        exit();
+                    } else {
+                        $error = "Gagal memperbarui data wali kelas: " . mysqli_error($koneksi);
+                    }
                 }
             } else {
-                $error = "Data kelas dengan Tingkat $tingkat_pilih dan Jurusan $jurusan_pilih tidak ditemukan!";
+                $error = "Data kelas tidak ditemukan!";
             }
         }
     } else {
@@ -150,24 +162,17 @@ if (isset($_POST['update'])) {
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Tingkat Kelas</label>
-                                <select name="tingkat_pilih" class="form-select" required>
+                                <select name="tingkat_pilih" id="tingkatPilih" class="form-select" required onchange="filterKelasByTingkat()">
                                     <option value="">-- Pilih Tingkat --</option>
-                                    <option value="10" <?= ($curr_tingkat == '10') ? 'selected' : ''; ?>>X (10)</option>
-                                    <option value="11" <?= ($curr_tingkat == '11') ? 'selected' : ''; ?>>XI (11)</option>
-                                    <option value="12" <?= ($curr_tingkat == '12') ? 'selected' : ''; ?>>XII (12)</option>
+                                    <option value="10" <?= ($curr_tingkat == '10') ? 'selected' : ''; ?>>10 (X)</option>
+                                    <option value="11" <?= ($curr_tingkat == '11') ? 'selected' : ''; ?>>11 (XI)</option>
+                                    <option value="12" <?= ($curr_tingkat == '12') ? 'selected' : ''; ?>>12 (XII)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Jurusan</label>
-                                <select name="jurusan_pilih" class="form-select" required>
-                                    <option value="">-- Pilih Jurusan --</option>
-                                    <?php
-                                    $q_jur = mysqli_query($koneksi, "SELECT DISTINCT jurusan FROM t_kelas WHERE jurusan IS NOT NULL AND jurusan != '' ORDER BY jurusan ASC");
-                                    while ($j = mysqli_fetch_assoc($q_jur)) {
-                                        $selected = ($j['jurusan'] == $curr_jurusan) ? 'selected' : '';
-                                        echo "<option value='{$j['jurusan']}' {$selected}>{$j['jurusan']}</option>";
-                                    }
-                                    ?>
+                                <label class="form-label fw-bold">Pilihan Kelas</label>
+                                <select name="kelas_pilih" id="kelasPilih" class="form-select" required>
+                                    <option value="">-- Pilih Kelas --</option>
                                 </select>
                             </div>
                         </div>
@@ -177,7 +182,10 @@ if (isset($_POST['update'])) {
                             <select name="tahun_ajaran_id" class="form-select" required>
                                 <option value="">-- Pilih Tahun Ajaran --</option>
                                 <?php
-                                $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY nama DESC");
+                                $q_ta = mysqli_query($koneksi, "SELECT MIN(id) as id, nama FROM t_tahun_ajaran WHERE nama LIKE '%$tahun_sekarang%' OR nama LIKE '%" . ($tahun_sekarang - 1) . "%' GROUP BY nama ORDER BY nama DESC");
+                                if (mysqli_num_rows($q_ta) == 0) {
+                                    $q_ta = mysqli_query($koneksi, "SELECT MIN(id) as id, nama FROM t_tahun_ajaran GROUP BY nama ORDER BY nama DESC LIMIT 3");
+                                }
                                 while ($ta = mysqli_fetch_assoc($q_ta)) {
                                     $selected = ($ta['id'] == $current['tahun_ajaran_id']) ? 'selected' : '';
                                     echo "<option value='{$ta['id']}' {$selected}>{$ta['nama']}</option>";
@@ -205,6 +213,59 @@ if (isset($_POST['update'])) {
       </main>
     </div>
   </div>
+
+  <!-- SCRIPT FILTER KELAS DINAMIS -->
+  <script>
+    const dataKelas = [
+      <?php
+      $q_all_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
+      while ($dk = mysqli_fetch_assoc($q_all_kelas)) {
+          $raw_tingkat = trim($dk['tingkat']);
+          $norm_tingkat = $raw_tingkat;
+          if (strtoupper($raw_tingkat) == 'X' || $raw_tingkat == '10') $norm_tingkat = '10';
+          if (strtoupper($raw_tingkat) == 'XI' || $raw_tingkat == '11') $norm_tingkat = '11';
+          if (strtoupper($raw_tingkat) == 'XII' || $raw_tingkat == '12') $norm_tingkat = '12';
+          
+          echo "{ id: '{$dk['id']}', tingkat: '{$norm_tingkat}', nama: '" . addslashes($dk['nama']) . "' },\n";
+      }
+      ?>
+    ];
+
+    function filterKelasByTingkat(selectedKelas = '') {
+      let tingkatVal = document.getElementById('tingkatPilih').value;
+      let kelasSelect = document.getElementById('kelasPilih');
+      
+      kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+
+      if (tingkatVal !== '') {
+        let filtered = dataKelas.filter(k => k.tingkat === tingkatVal);
+        if (filtered.length > 0) {
+          filtered.forEach(k => {
+            let opt = document.createElement('option');
+            opt.value = k.nama;
+            opt.textContent = k.nama;
+            if (k.nama === selectedKelas) {
+              opt.selected = true;
+            }
+            kelasSelect.appendChild(opt);
+          });
+        } else {
+          let opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '-- Tidak ada kelas untuk tingkat ini --';
+          kelasSelect.appendChild(opt);
+        }
+      }
+    }
+
+    // Jalankan otomatis saat halaman dimuat untuk mode Edit
+    window.onload = function() {
+      let currentKelas = "<?= addslashes($curr_nama_kelas); ?>";
+      if (document.getElementById('tingkatPilih').value !== '') {
+        filterKelasByTingkat(currentKelas);
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
