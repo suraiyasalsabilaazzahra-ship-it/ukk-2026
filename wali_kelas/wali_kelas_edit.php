@@ -39,24 +39,31 @@ if (isset($_POST['update'])) {
     $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
     if (!empty($guru_id) && !empty($tingkat_pilih) && !empty($jurusan_pilih) && !empty($tahun_ajaran_id)) {
-        // Cari ID kelas berdasarkan pilihan baru
-        $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND jurusan = '$jurusan_pilih' LIMIT 1");
         
-        if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
-            $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
-            $kelas_id = $d_kelas['id'];
-
-            $query = "UPDATE t_wali_kelas SET guru_id = '$guru_id', kelas_id = '$kelas_id', tahun_ajaran_id = '$tahun_ajaran_id', status_aktif = '$status_aktif' WHERE id = '$id'";
-            $result = mysqli_query($koneksi, $query);
-
-            if ($result) {
-                echo "<script>alert('Data wali kelas berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu8';</script>";
-                exit();
-            } else {
-                $error = "Gagal memperbarui data wali kelas: " . mysqli_error($koneksi);
-            }
+        // Cek apakah guru sudah terdaftar di kelas lain pada tahun ajaran yang sama (kecuali datanya sendiri)
+        $cek_guru = mysqli_query($koneksi, "SELECT * FROM t_wali_kelas WHERE guru_id = '$guru_id' AND tahun_ajaran_id = '$tahun_ajaran_id' AND id != '$id' LIMIT 1");
+        if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
+            $error = "Gagal! Guru tersebut sudah bertugas sebagai wali kelas di kelas lain pada tahun ajaran ini.";
         } else {
-            $error = "Data kelas dengan Tingkat $tingkat_pilih dan Jurusan $jurusan_pilih tidak ditemukan!";
+            // Cari ID kelas berdasarkan pilihan baru
+            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND jurusan = '$jurusan_pilih' LIMIT 1");
+            
+            if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
+                $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
+                $kelas_id = $d_kelas['id'];
+
+                $query = "UPDATE t_wali_kelas SET guru_id = '$guru_id', kelas_id = '$kelas_id', tahun_ajaran_id = '$tahun_ajaran_id', status_aktif = '$status_aktif' WHERE id = '$id'";
+                $result = mysqli_query($koneksi, $query);
+
+                if ($result) {
+                    echo "<script>alert('Data wali kelas berhasil diperbarui!'); window.location.href='../dashboard.php?tab=menu8';</script>";
+                    exit();
+                } else {
+                    $error = "Gagal memperbarui data wali kelas: " . mysqli_error($koneksi);
+                }
+            } else {
+                $error = "Data kelas dengan Tingkat $tingkat_pilih dan Jurusan $jurusan_pilih tidak ditemukan!";
+            }
         }
     } else {
         $error = "Semua kolom wajib diisi!";
@@ -110,7 +117,7 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
+      <!-- KONTEN UTAMA -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
         <div class="container-fluid px-0">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
@@ -140,7 +147,6 @@ if (isset($_POST['update'])) {
                             </select>
                         </div>
 
-                        <!-- 2 KOLOM SEJAJAR: Tingkat Kelas dan Jurusan -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Tingkat Kelas</label>

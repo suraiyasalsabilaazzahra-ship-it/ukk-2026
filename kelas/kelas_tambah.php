@@ -22,6 +22,15 @@ if (isset($_POST['simpan'])) {
     $jurusan       = mysqli_real_escape_string($koneksi, $_POST['jurusan']);
     $wali_kelas_id = !empty($_POST['wali_kelas_id']) ? (int)$_POST['wali_kelas_id'] : null;
 
+    // Validasi: Cek apakah guru sudah menjadi wali kelas di kelas lain
+    if ($wali_kelas_id) {
+        $cek_guru_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE wali_kelas_id = '$wali_kelas_id' LIMIT 1");
+        if ($cek_guru_kelas && mysqli_num_rows($cek_guru_kelas) > 0) {
+            echo "<script>alert('Gagal! Guru tersebut sudah menjadi wali kelas di kelas lain.'); window.history.back();</script>";
+            exit();
+        }
+    }
+
     // 1. Simpan data ke tabel t_kelas
     $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_kelas");
     $r_max = mysqli_fetch_assoc($q_max);
@@ -34,7 +43,6 @@ if (isset($_POST['simpan'])) {
         
         // 2. OTOMATIS SIMPAN KE t_wali_kelas JIKA GURU DIPILIH & ADA TAHUN AJARAN AKTIF
         if ($wali_kelas_id && $default_ta_id) {
-            // Cek apakah guru atau kelas sudah punya data wali kelas di tahun ajaran aktif ini
             $cek_wk = mysqli_query($koneksi, "SELECT id FROM t_wali_kelas WHERE kelas_id = '$new_id' AND tahun_ajaran_id = '$default_ta_id'");
             if (mysqli_num_rows($cek_wk) == 0) {
                 $q_max_wk = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_wali_kelas");

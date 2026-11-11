@@ -36,6 +36,15 @@ if (isset($_POST['update'])) {
     $jurusan       = mysqli_real_escape_string($koneksi, $_POST['jurusan']);
     $wali_kelas_id = !empty($_POST['wali_kelas_id']) ? (int)$_POST['wali_kelas_id'] : null;
 
+    // Validasi: Cek apakah guru sudah menjadi wali kelas di kelas lain (kecuali kelas ini sendiri)
+    if ($wali_kelas_id) {
+        $cek_guru_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE wali_kelas_id = '$wali_kelas_id' AND id != '$id' LIMIT 1");
+        if ($cek_guru_kelas && mysqli_num_rows($cek_guru_kelas) > 0) {
+            echo "<script>alert('Gagal! Guru tersebut sudah menjadi wali kelas di kelas lain.'); window.history.back();</script>";
+            exit();
+        }
+    }
+
     $val_wali = $wali_kelas_id ? "'$wali_kelas_id'" : "NULL";
     $query = "UPDATE t_kelas SET nama = '$nama_kelas', tingkat = '$tingkat', jurusan = '$jurusan', wali_kelas_id = $val_wali WHERE id = '$id'";
 
@@ -43,22 +52,18 @@ if (isset($_POST['update'])) {
         
         // SINKRONISASI KE TABEL t_wali_kelas
         if ($default_ta_id) {
-            // Cek apakah data wali kelas untuk kelas ini sudah ada di t_wali_kelas
             $cek_wk = mysqli_query($koneksi, "SELECT id FROM t_wali_kelas WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
             
             if ($wali_kelas_id) {
                 if (mysqli_num_rows($cek_wk) > 0) {
-                    // Update guru jika sudah ada
                     mysqli_query($koneksi, "UPDATE t_wali_kelas SET guru_id = '$wali_kelas_id' WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
                 } else {
-                    // Insert baru jika belum ada
                     $q_max_wk = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_wali_kelas");
                     $r_max_wk = mysqli_fetch_assoc($q_max_wk);
                     $new_id_wk = ($r_max_wk['max_id'] ?? 0) + 1;
                     mysqli_query($koneksi, "INSERT INTO t_wali_kelas (id, guru_id, kelas_id, tahun_ajaran_id, status_aktif) VALUES ('$new_id_wk', '$wali_kelas_id', '$id', '$default_ta_id', '1')");
                 }
             } else {
-                // Jika pilihan wali kelas dikosongkan, hapus dari t_wali_kelas
                 mysqli_query($koneksi, "DELETE FROM t_wali_kelas WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
             }
         }

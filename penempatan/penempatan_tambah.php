@@ -10,7 +10,7 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
 $role = $_SESSION['role'];
 $error = "";
 
-$tahun_sekarang = date('Y');
+$tahun_sekarang = date('Y'); // 2026
 $tahun_ajaran_otomatis = $tahun_sekarang . '/' . ($tahun_sekarang + 1);
 
 if (isset($_POST['simpan'])) {
@@ -21,8 +21,7 @@ if (isset($_POST['simpan'])) {
     $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
     if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($tingkat_pilih) && !empty($jurusan_pilih)) {
-        // Cari ID kelas yang cocok berdasarkan tingkat dan jurusan/nama kelas di tabel t_kelas
-        $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$jurusan_pilih' OR jurusan = '$jurusan_pilih') LIMIT 1");
+        $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$jurusan_pilih' OR id = '$jurusan_pilih') LIMIT 1");
         
         if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
             $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
@@ -30,7 +29,6 @@ if (isset($_POST['simpan'])) {
             $nama_kelas_sync = $d_kelas['nama'];
             $jurusan_sync = $d_kelas['jurusan'];
 
-            // 1. Simpan ke t_kelas_siswa
             $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_kelas_siswa");
             $r_max = mysqli_fetch_assoc($q_max);
             $new_id = ($r_max['max_id'] ?? 0) + 1;
@@ -39,7 +37,6 @@ if (isset($_POST['simpan'])) {
                                  VALUES ('$new_id', '$siswa_id', '$tahun_ajaran_id', '$kelas_id', '$status_aktif')";
             
             if (mysqli_query($koneksi, $query_penempatan)) {
-                // 2. Sinkronisasi otomatis ke tabel t_siswa
                 mysqli_query($koneksi, "UPDATE t_siswa SET kelas_id = '$kelas_id', kelas = '$nama_kelas_sync', jurusan = '$jurusan_sync' WHERE id = '$siswa_id'");
 
                 echo "<script>
@@ -51,7 +48,7 @@ if (isset($_POST['simpan'])) {
                 $error = "Gagal menyimpan penempatan: " . mysqli_error($koneksi);
             }
         } else {
-            $error = "Data kelas tidak ditemukan untuk kombinasi Tingkat $tingkat_pilih dan Pilihan Kelas tersebut!";
+            $error = "Data kelas tidak ditemukan untuk kombinasi tingkat dan pilihan tersebut!";
         }
     } else {
         $error = "Semua kolom wajib diisi!";
@@ -103,7 +100,7 @@ if (isset($_POST['simpan'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
+      <!-- KONTEN UTAMA -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
         <div class="container-fluid px-0">
           <form action="" method="POST">
@@ -129,11 +126,10 @@ if (isset($_POST['simpan'])) {
                   </select>
                 </div>
 
-                <!-- 2 KOLOM TERPISAH: Tingkat Kelas dan Pilihan Kelas/Jurusan -->
                 <div class="row g-3 mb-3">
                   <div class="col-md-6">
                     <label class="form-label fw-bold">Tingkat Kelas</label>
-                    <select name="tingkat_pilih" class="form-select" required>
+                    <select name="tingkat_pilih" id="tingkatPilih" class="form-select" required onchange="filterKelasByTingkat()">
                       <option value="">-- Pilih Tingkat --</option>
                       <option value="10">10 (X)</option>
                       <option value="11">11 (XI)</option>
@@ -143,14 +139,8 @@ if (isset($_POST['simpan'])) {
 
                   <div class="col-md-6">
                     <label class="form-label fw-bold">Pilihan Kelas & Jurusan</label>
-                    <select name="jurusan_pilih" class="form-select" required>
-                      <option value="">-- Pilih Kelas --</option>
-                      <?php
-                      $q_jur = mysqli_query($koneksi, "SELECT DISTINCT nama FROM t_kelas WHERE nama IS NOT NULL AND nama != '' ORDER BY nama ASC");
-                      while ($j = mysqli_fetch_assoc($q_jur)) {
-                          echo "<option value='{$j['nama']}'>{$j['nama']}</option>";
-                      }
-                      ?>
+                    <select name="jurusan_pilih" id="jurusanPilih" class="form-select" required>
+                      <option value="">-- Pilih Tingkat Terlebih Dahulu --</option>
                     </select>
                   </div>
                 </div>
@@ -160,7 +150,10 @@ if (isset($_POST['simpan'])) {
                   <select name="tahun_ajaran_id" class="form-select" required>
                     <option value="">-- Pilih Tahun Ajaran --</option>
                     <?php
-                    $q_ta = mysqli_query($koneksi, "SELECT * FROM t_tahun_ajaran ORDER BY nama DESC");
+                    $q_ta = mysqli_query($koneksi, "SELECT DISTINCT * FROM t_tahun_ajaran WHERE nama LIKE '%$tahun_sekarang%' OR nama LIKE '%" . ($tahun_sekarang - 1) . "%' ORDER BY nama DESC");
+                    if (mysqli_num_rows($q_ta) == 0) {
+                        $q_ta = mysqli_query($koneksi, "SELECT DISTINCT * FROM t_tahun_ajaran ORDER BY nama DESC LIMIT 3");
+                    }
                     while ($ta = mysqli_fetch_assoc($q_ta)) {
                         $selected = ($ta['nama'] === $tahun_ajaran_otomatis) ? 'selected' : '';
                         echo "<option value='{$ta['id']}' {$selected}>{$ta['nama']}</option>";
@@ -188,6 +181,51 @@ if (isset($_POST['simpan'])) {
       </main>
     </div>
   </div>
+
+  <!-- SCRIPT FILTER KELAS DINAMIS -->
+  <script>
+    const dataKelas = [
+      <?php
+      $q_all_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
+      while ($dk = mysqli_fetch_assoc($q_all_kelas)) {
+          $raw_tingkat = trim($dk['tingkat']);
+          $norm_tingkat = $raw_tingkat;
+          if (strtoupper($raw_tingkat) == 'X' || $raw_tingkat == '10') $norm_tingkat = '10';
+          if (strtoupper($raw_tingkat) == 'XI' || $raw_tingkat == '11') $norm_tingkat = '11';
+          if (strtoupper($raw_tingkat) == 'XII' || $raw_tingkat == '12') $norm_tingkat = '12';
+          
+          echo "{ id: '{$dk['id']}', tingkat: '{$norm_tingkat}', nama: '" . addslashes($dk['nama']) . "' },\n";
+      }
+      ?>
+    ];
+
+    function filterKelasByTingkat(selectedKelas = '') {
+      let tingkatVal = document.getElementById('tingkatPilih').value;
+      let jurusanSelect = document.getElementById('jurusanPilih');
+      
+      jurusanSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+
+      if (tingkatVal !== '') {
+        let filtered = dataKelas.filter(k => k.tingkat === tingkatVal);
+        if (filtered.length > 0) {
+          filtered.forEach(k => {
+            let opt = document.createElement('option');
+            opt.value = k.nama;
+            opt.textContent = k.nama;
+            if (k.nama === selectedKelas) {
+              opt.selected = true;
+            }
+            jurusanSelect.appendChild(opt);
+          });
+        } else {
+          let opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '-- Tidak ada kelas untuk tingkat ini --';
+          jurusanSelect.appendChild(opt);
+        }
+      }
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

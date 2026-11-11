@@ -23,29 +23,35 @@ if (isset($_POST['simpan'])) {
 
     if (!empty($guru_id) && !empty($tingkat_pilih) && !empty($jurusan_pilih) && !empty($tahun_ajaran_id)) {
         
-        // Cari ID kelas berdasarkan tingkat dan jurusan yang dipilih
-        $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND jurusan = '$jurusan_pilih' LIMIT 1");
-        
-        if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
-            $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
-            $kelas_id = $d_kelas['id'];
-
-            $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_wali_kelas");
-            $r_max = mysqli_fetch_assoc($q_max);
-            $new_id = ($r_max['max_id'] ?? 0) + 1;
-
-            $query = "INSERT INTO t_wali_kelas (id, guru_id, kelas_id, tahun_ajaran_id, status_aktif) 
-                      VALUES ('$new_id', '$guru_id', '$kelas_id', '$tahun_ajaran_id', '$status_aktif')";
-            $result = mysqli_query($koneksi, $query);
-
-            if ($result) {
-                echo "<script>alert('Berhasil! Data wali kelas baru telah ditambahkan.'); window.location.href='../dashboard.php?tab=menu8';</script>";
-                exit();
-            } else {
-                $error = "Gagal menyimpan data wali kelas: " . mysqli_error($koneksi);
-            }
+        // Cek apakah guru sudah menjadi wali kelas pada tahun ajaran yang sama
+        $cek_guru = mysqli_query($koneksi, "SELECT * FROM t_wali_kelas WHERE guru_id = '$guru_id' AND tahun_ajaran_id = '$tahun_ajaran_id' LIMIT 1");
+        if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
+            $error = "Gagal! Guru tersebut sudah bertugas sebagai wali kelas di kelas lain pada tahun ajaran ini.";
         } else {
-            $error = "Data kelas dengan Tingkat $tingkat_pilih dan Jurusan $jurusan_pilih tidak ditemukan di tabel t_kelas!";
+            // Cari ID kelas berdasarkan tingkat dan jurusan yang dipilih
+            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND jurusan = '$jurusan_pilih' LIMIT 1");
+            
+            if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
+                $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
+                $kelas_id = $d_kelas['id'];
+
+                $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_wali_kelas");
+                $r_max = mysqli_fetch_assoc($q_max);
+                $new_id = ($r_max['max_id'] ?? 0) + 1;
+
+                $query = "INSERT INTO t_wali_kelas (id, guru_id, kelas_id, tahun_ajaran_id, status_aktif) 
+                          VALUES ('$new_id', '$guru_id', '$kelas_id', '$tahun_ajaran_id', '$status_aktif')";
+                $result = mysqli_query($koneksi, $query);
+
+                if ($result) {
+                    echo "<script>alert('Berhasil! Data wali kelas baru telah ditambahkan.'); window.location.href='../dashboard.php?tab=menu8';</script>";
+                    exit();
+                } else {
+                    $error = "Gagal menyimpan data wali kelas: " . mysqli_error($koneksi);
+                }
+            } else {
+                $error = "Data kelas dengan Tingkat $tingkat_pilih dan Jurusan $jurusan_pilih tidak ditemukan di tabel t_kelas!";
+            }
         }
     } else {
         $error = "Semua kolom wajib diisi!";
@@ -99,7 +105,7 @@ if (isset($_POST['simpan'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
+      <!-- KONTEN UTAMA -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
         <div class="container-fluid px-0">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
@@ -128,7 +134,6 @@ if (isset($_POST['simpan'])) {
                             </select>
                         </div>
 
-                        <!-- 2 KOLOM SEJAJAR: Tingkat Kelas dan Jurusan -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Tingkat Kelas</label>
