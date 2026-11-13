@@ -22,17 +22,39 @@ if (isset($_POST['btn_simpan_pelanggaran_guru'])) {
     $keterangan      = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
 
     if (!empty($siswa_id) && !empty($kategori_id) && !empty($bentuk_tindakan)) {
+        // Ambil data siswa
         $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$siswa_id' LIMIT 1");
         $d_s = mysqli_fetch_assoc($q_s);
         $nama_siswa  = $d_s['nama'] ?? 'Siswa';
+        $raw_kelas_id = $d_s['kelas_id'] ?? 1;
         $kelas_siswa = $d_s['kelas'] ?? '-';
-        $kelas_id    = $d_s['kelas_id'] ?? 1;
 
+        // Validasi kelas_id agar aman dari Foreign Key Error
+        $q_cek_kelas = mysqli_query($koneksi, "SELECT id, nama FROM t_kelas WHERE id = '$raw_kelas_id' LIMIT 1");
+        if ($q_cek_kelas && mysqli_num_rows($q_cek_kelas) > 0) {
+            $d_ck = mysqli_fetch_assoc($q_cek_kelas);
+            $kelas_id = $d_ck['id'];
+            if (!empty($d_ck['nama'])) {
+                $kelas_siswa = $d_ck['nama'];
+            }
+        } else {
+            // Ambil kelas pertama yang valid jika kelas_id siswa 0 / tidak ditemukan
+            $q_def_kelas = mysqli_query($koneksi, "SELECT id, nama FROM t_kelas LIMIT 1");
+            if ($d_def = mysqli_fetch_assoc($q_def_kelas)) {
+                $kelas_id = $d_def['id'];
+                $kelas_siswa = $d_def['nama'];
+            } else {
+                $kelas_id = 1;
+            }
+        }
+
+        // Ambil data kategori pelanggaran & poin
         $q_k = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
         $d_k = mysqli_fetch_assoc($q_k);
         $nama_pelanggaran = $d_k['nama'] ?? 'Pelanggaran';
-        $poin_val = $d_k['poin'] ?? 0;
+        $poin_val = (int)($d_k['poin'] ?? 0);
 
+        // Simpan ke t_pelanggaran_siswa (Tanpa mengisi id secara manual agar menggunakan auto_increment)
         $query_insert = "INSERT INTO t_pelanggaran_siswa 
                          (siswa_id, nama_siswa, kelas_id, nama_kelas, pelanggaran_kategori_id, nama_pelanggaran, nama_guru, tanggal, keterangan, poin, tindakan, status) 
                          VALUES 
@@ -43,6 +65,7 @@ if (isset($_POST['btn_simpan_pelanggaran_guru'])) {
         if ($exec) {
             $pelanggaran_siswa_id = mysqli_insert_id($koneksi);
 
+            // Simpan ke t_tindakan
             @mysqli_query($koneksi, "INSERT INTO t_tindakan 
                                      (siswa_id, pelanggaran_siswa_id, bentuk_tindakan, tanggal_tindakan, status_penyelesaian) 
                                      VALUES 
@@ -54,7 +77,7 @@ if (isset($_POST['btn_simpan_pelanggaran_guru'])) {
                   </script>";
             exit();
         } else {
-            $msg_error = "Gagal Simpan: " . mysqli_error($koneksi);
+            $msg_error = "Gagal Simpan ke Database: " . mysqli_error($koneksi);
         }
     } else {
         $msg_error = "Mohon lengkapi Siswa, Kategori Pelanggaran, dan Bentuk Tindakan!";
@@ -110,16 +133,10 @@ if (isset($_POST['btn_simpan_pelanggaran_guru'])) {
                     <small class="text-muted mt-1 d-block">Poin otomatis: <span id="infoPoin" class="fw-bold text-danger">0 Poin</span></small>
                 </div>
 
+                <!-- BENTUK TINDAKAN DIKETIK BEBAS -->
                 <div class="mb-3">
                     <label class="form-label fw-bold">Bentuk Tindakan / Sanksi <span class="text-danger">*</span></label>
-                    <select name="bentuk_tindakan" class="form-select py-2" required>
-                        <option value="">-- Pilih Bentuk Tindakan --</option>
-                        <option value="Menunggu 45 menit di luar kelas sebelum masuk">Menunggu 45 menit di luar kelas sebelum masuk</option>
-                        <option value="Membersihkan lingkungan sekolah / halaman">Membersihkan lingkungan sekolah / halaman</option>
-                        <option value="Membuat surat pernyataan bermaterai">Membuat surat pernyataan bermaterai</option>
-                        <option value="Panggilan orang tua / wali murid ke sekolah">Panggilan orang tua / wali murid ke sekolah</option>
-                        <option value="Peringatan lisan dan pembinaan guru BK">Peringatan lisan dan pembinaan guru BK</option>
-                    </select>
+                    <input type="text" name="bentuk_tindakan" class="form-control py-2" placeholder="Ketik bentuk tindakan / sanksi di sini..." required>
                 </div>
 
                 <div class="mb-3">

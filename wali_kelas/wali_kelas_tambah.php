@@ -16,7 +16,7 @@ $tahun_ajaran_otomatis = $tahun_sekarang . '/' . ($tahun_sekarang + 1);
 if (isset($_POST['simpan'])) {
     $guru_id         = mysqli_real_escape_string($koneksi, $_POST['guru_id'] ?? '');
     $tingkat_pilih   = mysqli_real_escape_string($koneksi, $_POST['tingkat_pilih'] ?? '');
-    $kelas_pilih     = mysqli_real_escape_string($koneksi, $_POST['kelas_pilih'] ?? ''); // Menggunakan nama kelas / ID kelas
+    $kelas_pilih     = mysqli_real_escape_string($koneksi, $_POST['kelas_pilih'] ?? ''); 
     $tahun_ajaran_id = mysqli_real_escape_string($koneksi, $_POST['tahun_ajaran_id'] ?? '');
     $status_aktif    = mysqli_real_escape_string($koneksi, $_POST['status_aktif'] ?? '1');
 
@@ -27,8 +27,8 @@ if (isset($_POST['simpan'])) {
         if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
             $error = "Gagal! Guru tersebut sudah bertugas sebagai wali kelas di kelas lain pada tahun ajaran ini.";
         } else {
-            // Cari ID kelas berdasarkan tingkat dan nama kelas yang dipilih
-            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$kelas_pilih' OR id = '$kelas_pilih') LIMIT 1");
+            // Cari ID kelas berdasarkan nama kelas atau ID yang dipilih (diperbaiki agar lebih fleksibel)
+            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE nama = '$kelas_pilih' OR id = '$kelas_pilih' LIMIT 1");
             
             if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
                 $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
@@ -55,7 +55,7 @@ if (isset($_POST['simpan'])) {
                     }
                 }
             } else {
-                $error = "Data kelas tidak ditemukan!";
+                $error = "Data kelas tidak ditemukan di database!";
             }
         }
     } else {

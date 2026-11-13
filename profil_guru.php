@@ -18,19 +18,14 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
 
 $user_email = $_SESSION['email'] ?? '';
 $user_name  = $_SESSION['nama'] ?? 'Guru Pengajar';
+$user_id    = $_SESSION['user_id'] ?? ($_SESSION['id'] ?? '');
 
-// Ambil data guru dengan aman
+// Ambil data guru murni berdasarkan akun session yang sedang aktif
 $guru_data = null;
-if (!empty($user_email)) {
-    $q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru WHERE email = '$user_email' OR nama = '$user_name' LIMIT 1");
+if (!empty($user_email) || !empty($user_name) || !empty($user_id)) {
+    $q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru WHERE email = '$user_email' OR nama = '$user_name' OR user_id = '$user_id' LIMIT 1");
     if ($q_guru && mysqli_num_rows($q_guru) > 0) {
         $guru_data = mysqli_fetch_assoc($q_guru);
-    }
-}
-if (!$guru_data) {
-    $q_all = mysqli_query($koneksi, "SELECT * FROM t_guru LIMIT 1");
-    if ($q_all) {
-        $guru_data = mysqli_fetch_assoc($q_all);
     }
 }
 ?>

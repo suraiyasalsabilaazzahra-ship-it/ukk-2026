@@ -3,7 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-// Perbaikan path koneksi yang aman dari folder manapun file ini diakses
 if (file_exists('../koneksi.php')) {
   include '../koneksi.php';
 } elseif (file_exists('koneksi.php')) {
@@ -19,6 +18,7 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
 
 $role = $_SESSION['role'] ?? 'Admin';
 $msg_error = "";
+$nama_admin_login = $_SESSION['nama'] ?? 'Administrator';
 
 if (isset($_POST['btn_simpan_pelanggaran'])) {
   $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
@@ -28,32 +28,39 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
   $keterangan      = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
 
   if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal) && !empty($bentuk_tindakan)) {
-    // Ambil poin otomatis dari t_pelanggaran_kategori
-    $q_get_poin = mysqli_query($koneksi, "SELECT poin FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
-    $d_poin = mysqli_fetch_assoc($q_get_poin);
-    $poin_val = $d_poin['poin'] ?? 0;
+    $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$siswa_id' LIMIT 1");
+    $d_s = mysqli_fetch_assoc($q_s);
+    $nama_siswa  = $d_s['nama'] ?? 'Siswa';
+    $kelas_siswa = $d_s['kelas'] ?? '-';
+    $kelas_id    = $d_s['kelas_id'] ?? 1;
 
-    // 1. Simpan ke t_pelanggaran_siswa
-    $query_insert = "INSERT INTO t_pelanggaran_siswa (siswa_id, pelanggaran_kategori_id, poin, tanggal, keterangan) 
-                         VALUES ('$siswa_id', '$kategori_id', '$poin_val', '$tanggal', '$keterangan')";
+    $q_k = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
+    $d_k = mysqli_fetch_assoc($q_k);
+    $nama_pelanggaran = !empty($d_k['nama']) ? $d_k['nama'] : ($d_k['nama_kategori'] ?? 'Pelanggaran');
+    $poin_val = (int)($d_k['poin'] ?? 0);
+
+    $query_insert = "INSERT INTO t_pelanggaran_siswa 
+                     (siswa_id, nama_siswa, kelas_id, nama_kelas, pelanggaran_kategori_id, nama_pelanggaran, nama_guru, tanggal, keterangan, poin, tindakan, status) 
+                     VALUES 
+                     ('$siswa_id', '$nama_siswa', '$kelas_id', '$kelas_siswa', '$kategori_id', '$nama_pelanggaran', '$nama_admin_login', '$tanggal', '$keterangan', '$poin_val', '$bentuk_tindakan', 'Aktif')";
 
     $exec = mysqli_query($koneksi, $query_insert);
     if ($exec) {
-      // Ambil ID dari data pelanggaran yang baru saja masuk
       $last_pelanggaran_id = mysqli_insert_id($koneksi);
 
-      // 2. Simpan juga bentuk tindakan ke t_tindakan agar sinkron
-      mysqli_query($koneksi, "INSERT INTO t_tindakan (pelanggaran_siswa_id, bentuk_tindakan, tanggal_tindakan, status_penyelesaian) 
-                                    VALUES ('$last_pelanggaran_id', '$bentuk_tindakan', '$tanggal', 'Diproses')");
+      @mysqli_query($koneksi, "INSERT INTO t_tindakan 
+                               (siswa_id, pelanggaran_siswa_id, bentuk_tindakan, tanggal_tindakan, status_penyelesaian) 
+                               VALUES 
+                               ('$siswa_id', '$last_pelanggaran_id', '$bentuk_tindakan', '$tanggal', 'Diproses')");
 
       $target_tab = ($role === 'Guru') ? 'menu2' : 'menu9';
       echo "<script>
-                    alert('Berhasil! Data pelanggaran dan sanksi tindakan siswa telah dicatat.');
-                    window.location.href = '../dashboard.php?tab={$target_tab}';
-                  </script>";
+              alert('Berhasil! Data pelanggaran dan sanksi tindakan siswa telah dicatat.');
+              window.location.href = '../dashboard.php?tab={$target_tab}';
+            </script>";
       exit();
     } else {
-      $msg_error = "Gagal Simpan: " . mysqli_error($koneksi);
+      $msg_error = "Gagal Simpan ke Database: " . mysqli_error($koneksi);
     }
   } else {
     $msg_error = "Mohon lengkapi Siswa, Kategori Pelanggaran, Tanggal, dan Bentuk Tindakan!";
@@ -106,7 +113,11 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
 
     main {
       margin-left: 250px;
-      width: calc(100% - 250px);
+      padding-bottom: 80px;
+    }
+
+    @media (max-width: 768px) {
+      main { margin-left: 0; }
     }
   </style>
 </head>
@@ -126,27 +137,37 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
         <hr class="text-white-50">
         <ul class="nav flex-column mb-auto">
           <li class="nav-item"><a href="../dashboard.php?tab=menu1" class="nav-link-custom"><i class="bi bi-speedometer2 fs-5"></i><span>Dashboard</span></a></li>
+          
           <?php if ($role === 'Guru'): ?>
             <li class="nav-item"><a href="../dashboard.php?tab=menu2" class="nav-link-custom" style="background-color: #ffc107; color: #0d1b2a; font-weight: 700;"><i class="bi bi-exclamation-triangle fs-5"></i><span>Catat Pelanggaran</span></a></li>
             <li class="nav-item"><a href="../dashboard.php?tab=menu3" class="nav-link-custom"><i class="bi bi-check-circle fs-5"></i><span>Tindakan</span></a></li>
             <li class="nav-item"><a href="../dashboard.php?tab=menu4" class="nav-link-custom"><i class="bi bi-person-badge fs-5"></i><span>Profil Guru</span></a></li>
           <?php else: ?>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu2" class="nav-link-custom"><i class="bi bi-person-workspace fs-5"></i><span>Data Guru</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu3" class="nav-link-custom"><i class="bi bi-door-closed fs-5"></i><span>Data Kelas</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu4" class="nav-link-custom"><i class="bi bi-people fs-5"></i><span>Data Siswa</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu5" class="nav-link-custom"><i class="bi bi-calendar-event fs-5"></i><span>Tahun Ajaran</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu6" class="nav-link-custom"><i class="bi bi-diagram-3 fs-5"></i><span>Penempatan Siswa</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu7" class="nav-link-custom"><i class="bi bi-tags fs-5"></i><span>Kategori Pelanggaran</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu8" class="nav-link-custom"><i class="bi bi-person-bounding-box fs-5"></i><span>Data Wali Kelas</span></a></li>
             <li class="nav-item"><a href="../dashboard.php?tab=menu9" class="nav-link-custom" style="background-color: #ffc107; color: #0d1b2a; font-weight: 700;"><i class="bi bi-exclamation-triangle fs-5"></i><span>Pencatatan Pelanggaran</span></a></li>
+            <li class="nav-item"><a href="../dashboard.php?tab=menu10" class="nav-link-custom"><i class="bi bi-file-earmark-text fs-5"></i><span>Laporan Pelanggaran</span></a></li>
           <?php endif; ?>
+
           <li class="nav-item"><a href="../dashboard.php?tab=menu_about" class="nav-link-custom"><i class="bi bi-person-circle fs-5"></i><span>About Me</span></a></li>
           <li class="nav-item mt-4"><a href="../logout.php" class="nav-link-custom text-warning fw-bold bg-transparent border border-warning"><i class="bi bi-box-arrow-right fs-5"></i><span>Logout</span></a></li>
         </ul>
       </div>
 
       <!-- KONTEN UTAMA -->
-      <main class="col-12 p-4 ms-auto">
+      <main class="p-4">
         <div class="container-fluid px-0">
           <?php if (!empty($msg_error)): ?>
             <div class="alert alert-danger shadow-sm mb-3"><?= $msg_error; ?></div>
           <?php endif; ?>
 
           <form action="" method="POST">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-5">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Catat Pelanggaran & Tindakan Siswa</h5>
               </div>
@@ -185,17 +206,9 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
                   <small class="text-muted mt-1 d-block">Poin akan otomatis terisi berdasarkan kategori yang dipilih: <span id="infoPoin" class="fw-bold text-danger">0 Poin</span></small>
                 </div>
 
-                <!-- PILIHAN BENTUK TINDAKAN / SANKSI -->
                 <div class="mb-3">
                   <label class="form-label fw-bold">Bentuk Tindakan / Sanksi <span class="text-danger">*</span></label>
-                  <select name="bentuk_tindakan" class="form-select py-2" required>
-                    <option value="">-- Pilih Bentuk Tindakan --</option>
-                    <option value="Menunggu 45 menit di luar kelas sebelum masuk">Menunggu 45 menit di luar kelas sebelum masuk</option>
-                    <option value="Membersihkan lingkungan sekolah / halaman">Membersihkan lingkungan sekolah / halaman</option>
-                    <option value="Membuat surat pernyataan bermaterai">Membuat surat pernyataan bermaterai</option>
-                    <option value="Panggilan orang tua / wali murid ke sekolah">Panggilan orang tua / wali murid ke sekolah</option>
-                    <option value="Peringatan lisan dan pembinaan guru BK">Peringatan lisan dan pembinaan guru BK</option>
-                  </select>
+                  <input type="string" name="bentuk_tindakan" class="form-control py-2" placeholder="Ketik bentuk tindakan / sanksi di sini..." required>
                 </div>
 
                 <div class="mb-3">
@@ -205,7 +218,7 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
 
                 <div class="mb-4">
                   <label class="form-label fw-bold">Keterangan / Catatan Tambahan</label>
-                  <textarea name="keterangan" class="form-control" rows="3" placeholder="Masukkan rincian pelanggaran..."></textarea>
+                  <textarea name="keterangan" class="form-control" rows="3" placeholder="Masukkan rincian pelanggaran jika ada..."></textarea>
                 </div>
 
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">

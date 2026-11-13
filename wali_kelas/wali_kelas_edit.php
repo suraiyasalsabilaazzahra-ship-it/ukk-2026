@@ -51,8 +51,8 @@ if (isset($_POST['update'])) {
         if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
             $error = "Gagal! Guru tersebut sudah bertugas sebagai wali kelas di kelas lain pada tahun ajaran ini.";
         } else {
-            // Cari ID kelas berdasarkan tingkat dan nama kelas baru
-            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND (nama = '$kelas_pilih' OR id = '$kelas_pilih') LIMIT 1");
+            // Cari ID kelas berdasarkan nama kelas atau ID (tanpa syarat tingkat agar lebih aman)
+            $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE nama = '$kelas_pilih' OR id = '$kelas_pilih' LIMIT 1");
             
             if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
                 $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
@@ -74,7 +74,7 @@ if (isset($_POST['update'])) {
                     }
                 }
             } else {
-                $error = "Data kelas tidak ditemukan!";
+                $error = "Data kelas tidak ditemukan di database!";
             }
         }
     } else {
@@ -258,7 +258,6 @@ if (isset($_POST['update'])) {
       }
     }
 
-    // Jalankan otomatis saat halaman dimuat untuk mode Edit
     window.onload = function() {
       let currentKelas = "<?= addslashes($curr_nama_kelas); ?>";
       if (document.getElementById('tingkatPilih').value !== '') {

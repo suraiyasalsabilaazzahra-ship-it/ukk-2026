@@ -21,31 +21,54 @@ if (!$current) {
     exit();
 }
 
+$q_tindakan_curr = mysqli_query($koneksi, "SELECT bentuk_tindakan FROM t_tindakan WHERE pelanggaran_siswa_id = '$id' LIMIT 1");
+$d_tindakan_curr = mysqli_fetch_assoc($q_tindakan_curr);
+$current_tindakan = $d_tindakan_curr['bentuk_tindakan'] ?? ($current['tindakan'] ?? '');
+
 $error = "";
 
 if (isset($_POST['update'])) {
-    $siswa_id    = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
-    $kategori_id = mysqli_real_escape_string($koneksi, $_POST['kategori_id'] ?? '');
-    $tanggal     = mysqli_real_escape_string($koneksi, $_POST['tanggal'] ?? '');
-    $keterangan  = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
+    $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
+    $kategori_id     = mysqli_real_escape_string($koneksi, $_POST['kategori_id'] ?? '');
+    $tanggal         = mysqli_real_escape_string($koneksi, $_POST['tanggal'] ?? '');
+    $bentuk_tindakan = mysqli_real_escape_string($koneksi, $_POST['bentuk_tindakan'] ?? '');
+    $keterangan      = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
 
-    if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal)) {
-        // Ambil poin otomatis terbaru
-        $q_get_poin = mysqli_query($koneksi, "SELECT poin FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
-        $d_poin = mysqli_fetch_assoc($q_get_poin);
-        $poin_val = $d_poin['poin'] ?? 0;
+    if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal) && !empty($bentuk_tindakan)) {
+        $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$siswa_id' LIMIT 1");
+        $d_s = mysqli_fetch_assoc($q_s);
+        $nama_siswa  = $d_s['nama'] ?? 'Siswa';
+        $kelas_siswa = $d_s['kelas'] ?? '-';
+        $kelas_id    = $d_s['kelas_id'] ?? 1;
+
+        $q_get_poin = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
+        $d_k = mysqli_fetch_assoc($q_get_poin);
+        $nama_pelanggaran = !empty($d_k['nama']) ? $d_k['nama'] : 'Pelanggaran';
+        $poin_val = (int)($d_k['poin'] ?? 0);
 
         $query = "UPDATE t_pelanggaran_siswa 
                   SET siswa_id = '$siswa_id', 
+                      nama_siswa = '$nama_siswa',
+                      kelas_id = '$kelas_id',
+                      nama_kelas = '$kelas_siswa',
                       pelanggaran_kategori_id = '$kategori_id', 
+                      nama_pelanggaran = '$nama_pelanggaran',
                       poin = '$poin_val', 
                       tanggal = '$tanggal', 
+                      tindakan = '$bentuk_tindakan',
                       keterangan = '$keterangan' 
                   WHERE id = '$id'";
                   
         $result = mysqli_query($koneksi, $query);
 
         if ($result) {
+            $q_cek_t = mysqli_query($koneksi, "SELECT id FROM t_tindakan WHERE pelanggaran_siswa_id = '$id' LIMIT 1");
+            if (mysqli_num_rows($q_cek_t) > 0) {
+                mysqli_query($koneksi, "UPDATE t_tindakan SET bentuk_tindakan = '$bentuk_tindakan', tanggal_tindakan = '$tanggal' WHERE pelanggaran_siswa_id = '$id'");
+            } else {
+                mysqli_query($koneksi, "INSERT INTO t_tindakan (siswa_id, pelanggaran_siswa_id, bentuk_tindakan, tanggal_tindakan, status_penyelesaian) VALUES ('$siswa_id', '$id', '$bentuk_tindakan', '$tanggal', 'Diproses')");
+            }
+
             echo "<script>
                     alert('Data pelanggaran berhasil diperbarui!');
                     window.location.href = '../dashboard.php?tab=menu9';
@@ -55,7 +78,7 @@ if (isset($_POST['update'])) {
             $error = "Gagal memperbarui data: " . mysqli_error($koneksi);
         }
     } else {
-        $error = "Kolom Siswa, Kategori Pelanggaran, dan Tanggal wajib diisi!";
+        $error = "Kolom Siswa, Kategori Pelanggaran, Tanggal, dan Bentuk Tindakan wajib diisi!";
     }
 }
 ?>
@@ -72,14 +95,15 @@ if (isset($_POST['update'])) {
     .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
     .sidebar .nav-link-custom { color: rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .sidebar .nav-link-custom:hover { color: #ffc107; background-color: rgba(255, 193, 7, 0.15); }
-    main { margin-left: 250px; }
+    main { margin-left: 250px; padding-bottom: 80px; }
+    @media (max-width: 768px) { main { margin-left: 0; } }
   </style>
 </head>
 <body>
   <div class="container-fluid">
     <div class="row">
       <!-- SIDEBAR -->
-      <div class="col-md-3 col-lg-2 sidebar p-3 text-white">
+      <div class="col-md-3 col-lg-2 sidebar p-3 text-white d-none d-md-block">
         <div class="d-flex align-items-center gap-2 mb-2 px-2 mt-2">
           <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
           <h4 class="mb-0 fw-bold fs-5">UKK System</h4>
@@ -104,22 +128,22 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA (Rata Kiri Penuh) -->
-      <main class="col-md-9 col-lg-10 p-4 ms-auto">
+      <!-- KONTEN UTAMA -->
+      <main class="col-12 col-md-9 col-lg-10 p-4 ms-auto">
         <div class="container-fluid px-0">
           <?php if (!empty($error)): ?>
             <div class="alert alert-danger py-2 mb-3"><?= $error; ?></div>
           <?php endif; ?>
 
           <form action="" method="POST">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-5">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Edit Catatan Pelanggaran</h5>
               </div>
               <div class="card-body p-4 bg-white">
                 
                 <div class="mb-3">
-                  <label class="form-label fw-bold">Pilih Siswa</label>
+                  <label class="form-label fw-bold">Pilih Siswa <span class="text-danger">*</span></label>
                   <select name="siswa_id" class="form-select py-2" required>
                     <option value="">-- Pilih Siswa --</option>
                     <?php
@@ -133,7 +157,7 @@ if (isset($_POST['update'])) {
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label fw-bold">Kategori Pelanggaran (Poin Otomatis)</label>
+                  <label class="form-label fw-bold">Kategori Pelanggaran (Poin Otomatis) <span class="text-danger">*</span></label>
                   <select name="kategori_id" id="pilihKategori" class="form-select py-2" required onchange="updatePoinInfo(this)">
                     <option value="">-- Pilih Pelanggaran --</option>
                     <?php
@@ -151,13 +175,18 @@ if (isset($_POST['update'])) {
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label fw-bold">Tanggal Kejadian</label>
+                  <label class="form-label fw-bold">Bentuk Tindakan / Sanksi <span class="text-danger">*</span></label>
+                  <input type="text" name="bentuk_tindakan" class="form-control py-2" value="<?= htmlspecialchars($current_tindakan); ?>" placeholder="Ketik bentuk tindakan / sanksi di sini..." required>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Tanggal Kejadian <span class="text-danger">*</span></label>
                   <input type="date" name="tanggal" class="form-control py-2" value="<?= htmlspecialchars($current['tanggal']); ?>" required>
                 </div>
 
                 <div class="mb-4">
-                  <label class="form-label fw-bold">Keterangan Tambahan</label>
-                  <textarea name="keterangan" class="form-control" rows="3"><?= htmlspecialchars($current['keterangan'] ?? ''); ?></textarea>
+                  <label class="form-label fw-bold">Keterangan / Catatan Tambahan</label>
+                  <textarea name="keterangan" class="form-control" rows="3" placeholder="Masukkan rincian tambahan jika ada..."><?= htmlspecialchars($current['keterangan'] ?? ''); ?></textarea>
                 </div>
 
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
