@@ -22,14 +22,12 @@ if (isset($_POST['simpan'])) {
 
     if (!empty($siswa_id) && !empty($tahun_ajaran_id) && !empty($tingkat_pilih) && !empty($kelas_pilih)) {
         
-        // Cek apakah siswa benar-benar ada
         $q_cek_siswa = mysqli_query($koneksi, "SELECT id, nama FROM t_siswa WHERE id = '$siswa_id' LIMIT 1");
         if (!$q_cek_siswa || mysqli_num_rows($q_cek_siswa) == 0) {
             $error = "Peringatan: Data siswa tidak ditemukan di database!";
         } else {
             $d_siswa = mysqli_fetch_assoc($q_cek_siswa);
 
-            // Cari kelas berdasarkan tingkat dan nama kelas yang dipilih
             $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas 
                 WHERE nama = '$kelas_pilih' AND tingkat = '$tingkat_pilih' LIMIT 1");
             
@@ -41,7 +39,6 @@ if (isset($_POST['simpan'])) {
                 $nama_kelas_sync = $d_kelas['nama'];
                 $jurusan_sync = $d_kelas['jurusan'];
 
-                // Cek duplikat penempatan pada tahun ajaran yang sama
                 $cek_duplikat = mysqli_query($koneksi, "SELECT id FROM t_kelas_siswa WHERE siswa_id = '$siswa_id' AND tahun_ajaran_id = '$tahun_ajaran_id' LIMIT 1");
                 if ($cek_duplikat && mysqli_num_rows($cek_duplikat) > 0) {
                     $error = "Peringatan: Siswa atas nama '{$d_siswa['nama']}' sudah memiliki penempatan kelas pada tahun ajaran tersebut!";
@@ -54,7 +51,8 @@ if (isset($_POST['simpan'])) {
                                          VALUES ('$new_id', '$siswa_id', '$tahun_ajaran_id', '$kelas_id', '$status_aktif')";
                     
                     if (mysqli_query($koneksi, $query_penempatan)) {
-                        mysqli_query($koneksi, "UPDATE t_siswa SET kelas_id = '$kelas_id', kelas = '$nama_kelas_sync', jurusan = '$jurusan_sync' WHERE id = '$siswa_id'");
+                        // Sinkronisasi kelas, jurusan, DAN status aktif ke tabel t_siswa secara dua arah
+                        mysqli_query($koneksi, "UPDATE t_siswa SET kelas_id = '$kelas_id', kelas = '$nama_kelas_sync', jurusan = '$jurusan_sync', status = '$status_aktif' WHERE id = '$siswa_id'");
 
                         echo "<script>
                                 alert('Berhasil! Penempatan siswa disimpan dan disinkronkan.');
@@ -80,6 +78,9 @@ if (isset($_POST['simpan'])) {
   <title>Tambah Penempatan Siswa - UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
     .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
@@ -135,8 +136,8 @@ if (isset($_POST['simpan'])) {
 
                 <div class="mb-3">
                   <label class="form-label fw-bold">Pilih Siswa</label>
-                  <select name="siswa_id" class="form-select" required>
-                    <option value="">-- Pilih Siswa --</option>
+                  <select name="siswa_id" id="searchSiswa" class="form-select" required>
+                    <option value="">-- Ketik atau Pilih Nama Siswa --</option>
                     <?php
                     $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
                     while ($s = mysqli_fetch_assoc($q_s)) {
@@ -202,14 +203,23 @@ if (isset($_POST['simpan'])) {
     </div>
   </div>
 
-  <!-- SCRIPT FILTER KELAS DINAMIS YANG DISESUAIKAN -->
+  <!-- jQuery & Select2 JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script>
+    $(document).ready(function() {
+        $('#searchSiswa').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Ketik atau Pilih Nama Siswa --',
+            allowClear: true
+        });
+    });
+
     const dataKelas = [
       <?php
       $q_all_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
       while ($dk = mysqli_fetch_assoc($q_all_kelas)) {
           $raw_tingkat = trim($dk['tingkat']);
-          // Jika tingkat di DB tersimpan angka (10, 11, 12), konversi ke Romawi agar match dengan value select
           $norm_tingkat = strtoupper($raw_tingkat);
           if ($raw_tingkat == '10') $norm_tingkat = 'X';
           if ($raw_tingkat == '11') $norm_tingkat = 'XI';
@@ -231,7 +241,7 @@ if (isset($_POST['simpan'])) {
         if (filtered.length > 0) {
           filtered.forEach(k => {
             let opt = document.createElement('option');
-            opt.value = k.nama; // Nilainya adalah nama kelas lengkap (misal: XII TKJ 3)
+            opt.value = k.nama;
             opt.textContent = k.nama;
             if (k.nama === selectedKelas) {
               opt.selected = true;

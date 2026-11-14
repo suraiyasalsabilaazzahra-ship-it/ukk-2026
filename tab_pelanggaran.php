@@ -5,26 +5,60 @@ $halaman = isset($_GET['halaman']) ? (int)$_GET['halaman'] : 1;
 $halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
 $cari = isset($_GET['cari_pelanggaran']) ? mysqli_real_escape_string($koneksi, $_GET['cari_pelanggaran']) : '';
 
-// Ambil data dari t_pelanggaran_siswa dan gabungkan dengan t_siswa, t_kelas, serta t_pelanggaran_kategori
+// Query utama mengambil data dari t_pelanggaran_siswa
 $sql_data = "SELECT ps.*, 
-                    s.nama AS nama_s, s.nisn AS nisn_s, s.kelas AS kelas_s,
-                    k.nama AS nama_k, k.poin AS poin_k 
+                    t.bentuk_tindakan AS t_bentuk 
              FROM t_pelanggaran_siswa ps
-             LEFT JOIN t_siswa s ON ps.siswa_id = s.id
-             LEFT JOIN t_pelanggaran_kategori k ON ps.pelanggaran_kategori_id = k.id
-             ORDER BY ps.id DESC";
+             LEFT JOIN t_tindakan t ON t.pelanggaran_siswa_id = ps.id
+             ORDER BY ps.tanggal DESC, ps.id DESC";
 
 $query_p = mysqli_query($koneksi, $sql_data);
 
 $all_data = [];
 if ($query_p) {
     while ($row = mysqli_fetch_assoc($query_p)) {
-        $nama_s = $row['nama_s'] ?? ($row['nama_siswa'] ?? 'Siswa Tidak Ditemukan');
-        $nisn_s = $row['nisn_s'] ?? '-';
-        $kelas_s = !empty($row['kelas_s']) ? $row['kelas_s'] : '-';
+        // Nama Siswa & NISN
+        $nama_s = !empty($row['nama_siswa']) ? $row['nama_siswa'] : '';
+        $nisn_s = '-';
+        if (empty($nama_s) && !empty($row['siswa_id'])) {
+            $sid = $row['siswa_id'];
+            $q_s = mysqli_query($koneksi, "SELECT nama, nisn FROM t_siswa WHERE id = '$sid' LIMIT 1");
+            if ($q_s && $data_s = mysqli_fetch_assoc($q_s)) {
+                $nama_s = $data_s['nama'] ?? 'Siswa';
+                $nisn_s = $data_s['nisn'] ?? '-';
+            }
+        } else if (!empty($row['siswa_id'])) {
+            $sid = $row['siswa_id'];
+            $q_s = mysqli_query($koneksi, "SELECT nisn FROM t_siswa WHERE id = '$sid' LIMIT 1");
+            if ($q_s && $data_s = mysqli_fetch_assoc($q_s)) {
+                $nisn_s = $data_s['nisn'] ?? '-';
+            }
+        }
+        if (empty($nama_s)) $nama_s = 'Siswa Tidak Ditemukan';
+
+        // Kelas Siswa
+        $kelas_s = !empty($row['nama_kelas']) ? $row['nama_kelas'] : '-';
+        if ($kelas_s == '-' && !empty($row['siswa_id'])) {
+            $sid = $row['siswa_id'];
+            $q_k = mysqli_query($koneksi, "SELECT k.nama FROM t_kelas_siswa ks JOIN t_kelas k ON ks.kelas_id = k.id WHERE ks.siswa_id = '$sid' LIMIT 1");
+            if ($q_k && $r_k = mysqli_fetch_assoc($q_k)) {
+                $kelas_s = $r_k['nama'];
+            }
+        }
+
+        // Nama Pelanggaran & Poin
+        $nama_p = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : '';
+        $poin_p = $row['poin'] ?? 0;
+        $kid = !empty($row['pelanggaran_kategori_id']) ? $row['pelanggaran_kategori_id'] : '';
         
-        $nama_p = $row['nama_k'] ?? ($row['nama_pelanggaran'] ?? 'Pelanggaran Umum');
-        $poin_p = !empty($row['poin']) ? $row['poin'] : ($row['poin_k'] ?? 0);
+        if ((empty($nama_p) || $poin_p == 0) && !empty($kid)) {
+            $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kid' LIMIT 1");
+            if ($q_kat && $data_kat = mysqli_fetch_assoc($q_kat)) {
+                if (empty($nama_p)) $nama_p = $data_kat['nama'] ?? ($data_kat['nama_kategori'] ?? 'Pelanggaran');
+                if ($poin_p == 0) $poin_p = $data_kat['poin'] ?? 0;
+            }
+        }
+        if (empty($nama_p)) $nama_p = 'Pelanggaran Umum';
 
         // Filter Pencarian
         if (!empty($cari)) {

@@ -35,8 +35,9 @@ if (file_exists('koneksi.php')) {
                   <th class="py-3">NISN</th>
                   <th class="py-3">JENIS PELANGGARAN</th>
                   <th class="py-3 text-center">POIN</th>
-                  <th class="py-3">BENTUK TINDAKAN</th>
+                  <th class="py-3">BENTUK TINDAKAN & STATUS</th>
                   <th class="py-3">KETERANGAN</th>
+                  <th class="py-3 text-center" style="width: 12%;">AKSI</th>
                 </tr>
               </thead>
               <tbody>
@@ -81,13 +82,18 @@ if (file_exists('koneksi.php')) {
                             $nama_p = $row['nama_pelanggaran'] ?? 'Pelanggaran Umum';
                         }
 
-                        // Ambil bentuk tindakan
+                        // Ambil bentuk tindakan & status penyelesaian
                         $bentuk_tindakan_display = "<span class='badge bg-light text-secondary border'><i class='bi bi-info-circle me-1'></i>Belum ada tindakan</span>";
-                        $q_t = mysqli_query($koneksi, "SELECT bentuk_tindakan FROM t_tindakan WHERE pelanggaran_siswa_id = '$pelanggaran_id' LIMIT 1");
+                        
+                        $q_t = mysqli_query($koneksi, "SELECT bentuk_tindakan, status_penyelesaian FROM t_tindakan WHERE pelanggaran_siswa_id = '$pelanggaran_id' LIMIT 1");
                         if ($q_t && mysqli_num_rows($q_t) > 0) {
                             $data_t = mysqli_fetch_assoc($q_t);
                             if (!empty($data_t['bentuk_tindakan'])) {
-                                $bentuk_tindakan_display = "<span class='badge bg-warning bg-opacity-10 text-dark border border-warning px-2 py-1'><i class='bi bi-clock-history me-1'></i>" . htmlspecialchars($data_t['bentuk_tindakan']) . "</span>";
+                                $status_val = $data_t['status_penyelesaian'] ?? 'Diproses';
+                                $badge_status_color = ($status_val === 'Selesai') ? 'bg-success text-white' : 'bg-warning text-dark';
+                                
+                                $bentuk_tindakan_display = "<div class='mb-1'><span class='badge bg-warning bg-opacity-10 text-dark border border-warning px-2 py-1'><i class='bi bi-clock-history me-1'></i>" . htmlspecialchars($data_t['bentuk_tindakan']) . "</span></div>" .
+                                                           "<span class='badge {$badge_status_color} px-2 py-1' style='font-size: 11px;'><i class='bi bi-check2-circle me-1'></i>Status: " . htmlspecialchars($status_val) . "</span>";
                             }
                         }
                         
@@ -102,11 +108,16 @@ if (file_exists('koneksi.php')) {
                         echo "<td class='text-center'><span class='badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1'>+" . htmlspecialchars($poin_p) . "</span></td>";
                         echo "<td>{$bentuk_tindakan_display}</td>";
                         echo "<td class='text-muted small'>" . htmlspecialchars($ket) . "</td>";
+                        echo "<td class='text-center'>
+                                <a href='tindakan/tindakan_edit.php?id={$pelanggaran_id}' class='btn btn-sm btn-warning text-white px-2 py-1 fw-semibold'>
+                                  <i class='bi bi-pencil-square me-1'></i>Atur Tindakan
+                                </a>
+                              </td>";
                         echo "</tr>";
                         $no++;
                     }
                 } else {
-                    echo "<tr><td colspan='8' class='text-center py-4 text-muted'>
+                    echo "<tr><td colspan='9' class='text-center py-4 text-muted'>
                             <i class='bi bi-folder2-open display-6 d-block mb-2'></i>
                             Belum ada data pelanggaran dan tindakan siswa yang tercatat.
                           </td></tr>";

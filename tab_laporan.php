@@ -3,11 +3,16 @@
 $tgl_mulai   = isset($_GET['tgl_mulai']) ? $_GET['tgl_mulai'] : '';
 $tgl_selesai = isset($_GET['tgl_selesai']) ? $_GET['tgl_selesai'] : '';
 
-// Mengambil data pelanggaran dan digabungkan dengan tabel t_tindakan agar bentuk tindakan guru ikut muncul
+// Mengambil data pelanggaran dan digabungkan dengan tabel t_tindakan serta t_siswa & kelas
 $sql_laporan = "SELECT ps.*, 
-                    t.bentuk_tindakan AS t_bentuk 
+                    t.bentuk_tindakan AS t_bentuk,
+                    s.nisn AS nisn_siswa,
+                    k.nama AS nama_kelas_siswa
              FROM t_pelanggaran_siswa ps
              LEFT JOIN t_tindakan t ON t.pelanggaran_siswa_id = ps.id
+             LEFT JOIN t_siswa s ON ps.siswa_id = s.id
+             LEFT JOIN t_kelas_siswa ks ON s.id = ks.siswa_id
+             LEFT JOIN t_kelas k ON ks.kelas_id = k.id
              ORDER BY ps.tanggal DESC, ps.id DESC";
 
 $query_laporan = mysqli_query($koneksi, $sql_laporan);
@@ -23,41 +28,22 @@ if ($query_laporan) {
         }
 
         // Nama Siswa & NISN
-        $nama_s = !empty($row['nama_siswa']) ? $row['nama_siswa'] : '';
-        $nisn_s = '-';
-        if (empty($nama_s) && !empty($row['siswa_id'])) {
-            $sid = $row['siswa_id'];
-            $q_s = mysqli_query($koneksi, "SELECT nama, nisn FROM t_siswa WHERE id = '$sid' LIMIT 1");
-            if ($q_s && $data_s = mysqli_fetch_assoc($q_s)) {
-                $nama_s = $data_s['nama'] ?? 'Siswa Tidak Ditemukan';
-                $nisn_s = $data_s['nisn'] ?? '-';
-            }
-        }
-        if (empty($nama_s)) $nama_s = 'Siswa Tidak Ditemukan';
+        $nama_s = !empty($row['nama_siswa']) ? $row['nama_siswa'] : (!empty($row['nama_s']) ? $row['nama_s'] : 'Siswa Tidak Ditemukan');
+        $nisn_s = !empty($row['nisn_siswa']) ? $row['nisn_siswa'] : '-';
 
         // Kelas Siswa
-        $kelas_Siswa = !empty($row['nama_kelas']) ? $row['nama_kelas'] : '-';
-        if ($kelas_Siswa == '-' && !empty($row['siswa_id'])) {
-            $sid = $row['siswa_id'];
-            $q_k = mysqli_query($koneksi, "SELECT k.nama FROM t_kelas_siswa ks JOIN t_kelas k ON ks.kelas_id = k.id WHERE ks.siswa_id = '$sid' LIMIT 1");
-            if ($q_k && $r_k = mysqli_fetch_assoc($q_k)) {
-                $kelas_Siswa = $r_k['nama'];
-            }
-        }
+        $kelas_Siswa = !empty($row['nama_kelas_siswa']) ? $row['nama_kelas_siswa'] : (!empty($row['nama_kelas']) ? $row['nama_kelas'] : '-');
 
         // Jenis Pelanggaran & Poin
         $nama_p = !empty($row['nama_pelanggaran']) ? $row['nama_pelanggaran'] : '';
         $poin_p = $row['poin'] ?? 0;
 
-        $kid = !empty($row['pelanggaran_kategori_id']) ? $row['pelanggaran_kategori_id'] : (!empty($row['pelanggaran_id']) ? $row['pelanggaran_id'] : '');
+        $kid = !empty($row['pelanggaran_kategori_id']) ? $row['pelanggaran_kategori_id'] : '';
         if ((empty($nama_p) || $poin_p == 0) && !empty($kid)) {
             $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kid' LIMIT 1");
-            if (!$q_kat || mysqli_num_rows($q_kat) == 0) {
-                $q_kat = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran WHERE id = '$kid' LIMIT 1");
-            }
             if ($q_kat && $data_kat = mysqli_fetch_assoc($q_kat)) {
                 if (empty($nama_p)) {
-                    $nama_p = $data_kat['nama_kategori'] ?? ($data_kat['nama'] ?? 'Pelanggaran Umum');
+                    $nama_p = $data_kat['nama'] ?? ($data_kat['nama_kategori'] ?? 'Pelanggaran Umum');
                 }
                 if ($poin_p == 0) {
                     $poin_p = $data_kat['poin'] ?? 0;
@@ -66,7 +52,7 @@ if ($query_laporan) {
         }
         if (empty($nama_p)) $nama_p = 'Pelanggaran Umum';
 
-        // Bentuk Tindakan dari Guru atau kolom tindakan
+        // Bentuk Tindakan
         $bentuk_tindakan = !empty($row['t_bentuk']) ? $row['t_bentuk'] : ($row['tindakan'] ?? '');
 
         $row['computed_nama_siswa'] = $nama_s;
@@ -76,8 +62,12 @@ if ($query_laporan) {
         $row['computed_poin'] = $poin_p;
         $row['computed_tindakan'] = $bentuk_tindakan;
 
-        $data_laporan[] = $row;
+        // Hindari duplikasi data jika ada join ganda dari t_kelas_siswa
+        $unik_key = $row['id'] . '-' . $nama_s;
+        $data_laporan[$unik_key] = $row;
     }
+    // Ubah kembali ke array biasa
+    $data_laporan = array_values($data_laporan);
 }
 ?>
 

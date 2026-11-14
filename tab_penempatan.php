@@ -70,9 +70,9 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
       </thead>
       <tbody>
         <?php
-        // 5. Query data dengan JOIN agar menampilkan nama, bukan ID angka
+        // 5. Query data dengan JOIN untuk mengambil status_aktif dari t_siswa dan t_kelas_siswa
         if (!empty($cari)) {
-            $q_ps = mysqli_query($koneksi, "SELECT ks.*, s.nama AS nama_siswa, ta.nama AS nama_ta, k.nama AS nama_kelas 
+            $q_ps = mysqli_query($koneksi, "SELECT ks.*, s.nama AS nama_siswa, s.status_aktif AS status_siswa, ta.nama AS nama_ta, k.nama AS nama_kelas 
                 FROM t_kelas_siswa ks 
                 JOIN t_siswa s ON ks.siswa_id = s.id 
                 JOIN t_tahun_ajaran ta ON ks.tahun_ajaran_id = ta.id 
@@ -80,7 +80,7 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
                 WHERE s.nama LIKE '%$cari%' OR ta.nama LIKE '%$cari%' OR k.nama LIKE '%$cari%' 
                 ORDER BY ks.id DESC LIMIT $halaman_awal, $batas");
         } else {
-            $q_ps = mysqli_query($koneksi, "SELECT ks.*, s.nama AS nama_siswa, ta.nama AS nama_ta, k.nama AS nama_kelas 
+            $q_ps = mysqli_query($koneksi, "SELECT ks.*, s.nama AS nama_siswa, s.status_aktif AS status_siswa, ta.nama AS nama_ta, k.nama AS nama_kelas 
                 FROM t_kelas_siswa ks 
                 JOIN t_siswa s ON ks.siswa_id = s.id 
                 JOIN t_tahun_ajaran ta ON ks.tahun_ajaran_id = ta.id 
@@ -91,7 +91,16 @@ $total_halaman = ceil($total_data / $batas); // Pembulatan ke atas
         if ($q_ps && mysqli_num_rows($q_ps) > 0) {
             $no = $halaman_awal + 1;
             while ($ps = mysqli_fetch_assoc($q_ps)) {
-                $st = ($ps['status_aktif'] == 1) ? '<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Aktif</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1">Non-Aktif</span>';
+                $status_s = $ps['status_siswa'] ?? 1;
+                $status_p = $ps['status_aktif'] ?? 1;
+
+                // Jika di t_siswa atau t_kelas_siswa berstatus 0 (Tidak Aktif), tampilkan Non-Aktif
+                if ($status_s == 0 || $status_p == 0) {
+                    $st = '<span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1">Non-Aktif</span>';
+                } else {
+                    $st = '<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Aktif</span>';
+                }
+
                 echo "<tr>
                         <td class='text-center fw-bold text-muted'>{$no}</td>
                         <td class='fw-semibold text-dark'>{$ps['nama_siswa']}</td>

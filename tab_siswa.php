@@ -11,7 +11,7 @@ $cari = isset($_GET['cari_siswa']) ? mysqli_real_escape_string($koneksi, $_GET['
 
 // 4. Hitung total seluruh data siswa
 if (!empty($cari)) {
-    $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR nis LIKE '%$cari%' OR kelas LIKE '%$cari%' OR jurusan LIKE '%$cari%'");
+    $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR nis LIKE '%$cari%'");
 } else {
     $query_total = mysqli_query($koneksi, "SELECT * FROM t_siswa");
 }
@@ -39,7 +39,7 @@ $total_halaman = ceil($total_data / $batas);
         <div class="col-md-10">
           <div class="input-group">
             <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" name="cari_siswa" class="form-control border-start-0 ps-0" placeholder="Cari nama siswa, NISN, atau kelas..." value="<?= htmlspecialchars($cari); ?>">
+            <input type="text" name="cari_siswa" class="form-control border-start-0 ps-0" placeholder="Cari nama siswa atau NISN..." value="<?= htmlspecialchars($cari); ?>">
           </div>
         </div>
         <div class="col-md-2 d-flex gap-2">
@@ -54,42 +54,41 @@ $total_halaman = ceil($total_data / $batas);
 
   <!-- TABEL DATA SISWA -->
   <div class="table-responsive rounded-3 overflow-hidden">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0 align-middle">
       <thead style="background-color: #1b263b; color: white;">
         <tr>
           <th width="6%">NO</th>
           <th width="15%">NISN</th>
           <th>NAMA SISWA</th>
-          <th width="15%">KELAS</th>
-          <th width="15%">JURUSAN</th>
-          <th width="10%" class="text-center">L/P</th>
+          <th width="12%" class="text-center">L/P</th>
+          <th width="15%" class="text-center">STATUS AKTIF</th>
           <th width="12%" class="text-center">AKSI</th>
         </tr>
       </thead>
       <tbody>
         <?php
-      if (!empty($cari)) {
-    $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR nis LIKE '%$cari%' OR kelas LIKE '%$cari%' OR jurusan LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
-} else {
-    $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY id DESC LIMIT $halaman_awal, $batas");
-}
+        if (!empty($cari)) {
+            $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE nama LIKE '%$cari%' OR nisn LIKE '%$cari%' OR nis LIKE '%$cari%' ORDER BY id DESC LIMIT $halaman_awal, $batas");
+        } else {
+            $q_sis = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY id DESC LIMIT $halaman_awal, $batas");
+        }
+
         if ($q_sis && mysqli_num_rows($q_sis) > 0) {
             $no = $halaman_awal + 1;
             while ($s = mysqli_fetch_assoc($q_sis)) {
                 $jk = $s['jenis_kelamin'] ?? '-';
                 $jk_badge = ($jk == 'L') ? '<span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1">Laki-Laki</span>' : '<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1">Perempuan</span>';
                 
-                // Mengambil data kelas dan jurusan jika ada di database
-                $kelas_siswa = $s['kelas'] ?? '-';
-                $jurusan_siswa = $s['jurusan'] ?? '-';
+                // Status Aktif / Non-Aktif
+                $status_val = $s['status_aktif'] ?? 1;
+                $status_badge = ($status_val == 1) ? '<span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Aktif</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1">Tidak Aktif</span>';
 
                 echo "<tr>
                         <td class='fw-bold text-muted'>{$no}</td>
                         <td>{$s['nisn']}</td>
                         <td class='fw-semibold'>{$s['nama']}</td>
-                        <td><span class='badge bg-light text-dark border'>{$kelas_siswa}</span></td>
-                        <td>{$jurusan_siswa}</td>
                         <td class='text-center'>{$jk_badge}</td>
+                        <td class='text-center'>{$status_badge}</td>
                         <td class='text-center'>
                           <a href='siswa/siswa_edit.php?id={$s['id']}' class='btn btn-warning btn-sm py-1 px-2 rounded-2 me-1 text-white'><i class='bi bi-pencil-square'></i></a>
                           <a href='siswa/siswa_hapus.php?id={$s['id']}' class='btn btn-danger btn-sm py-1 px-2 rounded-2' onclick='return confirm(\"Hapus siswa ini?\")'><i class='bi bi-trash'></i></a>
@@ -98,7 +97,7 @@ $total_halaman = ceil($total_data / $batas);
                 $no++;
             }
         } else {
-            echo "<tr><td colspan='7' class='text-center py-4 text-muted'>Belum ada data siswa ditemukan</td></tr>";
+            echo "<tr><td colspan='6' class='text-center py-4 text-muted'>Belum ada data siswa ditemukan</td></tr>";
         }
         ?>
       </tbody>

@@ -7,21 +7,13 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     exit();
 }
 
-$role = $_SESSION['role'];
+$role = $_SESSION['role'] ?? 'Admin';
 $error = "";
-
-$tahun_sekarang = date('Y');
-$nama_ta_otomatis = $tahun_sekarang . '/' . ($tahun_sekarang + 1);
-$q_ta_auto = mysqli_query($koneksi, "SELECT id FROM t_tahun_ajaran WHERE nama = '$nama_ta_otomatis' LIMIT 1");
-$d_ta_auto = mysqli_fetch_assoc($q_ta_auto);
-$default_ta_id = $d_ta_auto['id'] ?? null;
 
 if (isset($_POST['simpan'])) {
     $nisn         = mysqli_real_escape_string($koneksi, $_POST['nisn']);
     $nis          = mysqli_real_escape_string($koneksi, $_POST['nis']);
     $nama         = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $tingkat_pilih= mysqli_real_escape_string($koneksi, $_POST['tingkat_pilih'] ?? '');
-    $kelas_pilih  = mysqli_real_escape_string($koneksi, $_POST['kelas_pilih'] ?? '');
     $jenis_kelamin= mysqli_real_escape_string($koneksi, $_POST['jenis_kelamin']);
     $status_aktif = mysqli_real_escape_string($koneksi, $_POST['status_aktif']);
     $alamat       = mysqli_real_escape_string($koneksi, $_POST['alamat']);
@@ -31,45 +23,25 @@ if (isset($_POST['simpan'])) {
         exit();
     }
 
-    if (!empty($nisn) && !empty($nama) && !empty($tingkat_pilih) && !empty($kelas_pilih)) {
-        $q_cari_kelas = mysqli_query($koneksi, "SELECT id, nama, jurusan FROM t_kelas WHERE tingkat = '$tingkat_pilih' AND nama = '$kelas_pilih' LIMIT 1");
-        
-        if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
-            $d_kelas = mysqli_fetch_assoc($q_cari_kelas);
-            $kelas_id = $d_kelas['id'];
-            $nama_kelas_sync = $d_kelas['nama'];
-            $jurusan_sync = $d_kelas['jurusan'];
+    if (!empty($nisn) && !empty($nama)) {
+        $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_siswa");
+        $r_max = mysqli_fetch_assoc($q_max);
+        $new_id = ($r_max['max_id'] ?? 0) + 1;
 
-            $q_max = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_siswa");
-            $r_max = mysqli_fetch_assoc($q_max);
-            $new_id = ($r_max['max_id'] ?? 0) + 1;
-
-            $query = "INSERT INTO t_siswa (id, nisn, nis, nama, kelas_id, kelas, jurusan, jenis_kelamin, status_aktif, alamat) 
-                      VALUES ('$new_id', '$nisn', '$nis', '$nama', '$kelas_id', '$nama_kelas_sync', '$jurusan_sync', '$jenis_kelamin', '$status_aktif', '$alamat')";
-                      
-            if (mysqli_query($koneksi, $query)) {
-                if ($default_ta_id) {
-                    $q_max_ps = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_kelas_siswa");
-                    $r_max_ps = mysqli_fetch_assoc($q_max_ps);
-                    $new_id_ps = ($r_max_ps['max_id'] ?? 0) + 1;
-
-                    mysqli_query($koneksi, "INSERT INTO t_kelas_siswa (id, siswa_id, tahun_ajaran_id, kelas_id, status_aktif) 
-                                            VALUES ('$new_id_ps', '$new_id', '$default_ta_id', '$kelas_id', '$status_aktif')");
-                }
-
-                echo "<script>
-                        alert('Berhasil! Data siswa dan penempatan kelas telah tersimpan otomatis.');
-                        window.location.href = '../dashboard.php?tab=menu4';
-                      </script>";
-                exit();
-            } else {
-                $error = "Gagal menyimpan data: " . mysqli_error($koneksi);
-            }
+        $query = "INSERT INTO t_siswa (id, nisn, nis, nama, jenis_kelamin, status_aktif, alamat) 
+                  VALUES ('$new_id', '$nisn', '$nis', '$nama', '$jenis_kelamin', '$status_aktif', '$alamat')";
+                  
+        if (mysqli_query($koneksi, $query)) {
+            echo "<script>
+                    alert('Berhasil! Data siswa baru telah tersimpan.');
+                    window.location.href = '../dashboard.php?tab=menu4';
+                  </script>";
+            exit();
         } else {
-            $error = "Data kelas tidak ditemukan untuk kombinasi Tingkat dan Nama Kelas tersebut!";
+            $error = "Gagal menyimpan data: " . mysqli_error($koneksi);
         }
     } else {
-        $error = "Semua kolom wajib diisi!";
+        $error = "Kolom NISN dan Nama wajib diisi!";
     }
 }
 ?>
@@ -148,24 +120,6 @@ if (isset($_POST['simpan'])) {
 
                 <div class="row g-3 mb-3">
                   <div class="col-md-6">
-                    <label class="form-label fw-bold">Tingkat Kelas</label>
-                    <select name="tingkat_pilih" id="tingkatPilih" class="form-select" required>
-                      <option value="">-- Pilih Tingkat --</option>
-                      <option value="X">X</option>
-                      <option value="XI">XI</option>
-                      <option value="XII">XII</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold">Pilihan Kelas</label>
-                    <select name="kelas_pilih" id="kelasPilih" class="form-select" required>
-                      <option value="">-- Pilih Tingkat Terlebih Dahulu --</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6">
                     <label class="form-label fw-bold">Jenis Kelamin</label>
                     <select name="jenis_kelamin" class="form-select" required>
                       <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
@@ -200,35 +154,6 @@ if (isset($_POST['simpan'])) {
       </main>
     </div>
   </div>
-
-  <script>
-    const dataKelas = [
-      <?php
-      $q_all = mysqli_query($koneksi, "SELECT tingkat, nama FROM t_kelas ORDER BY nama ASC");
-      while ($row = mysqli_fetch_assoc($q_all)) {
-          echo "{tingkat: '" . trim($row['tingkat']) . "', nama: '" . trim($row['nama']) . "'},";
-      }
-      ?>
-    ];
-
-    const tingkatSelect = document.getElementById('tingkatPilih');
-    const kelasSelect = document.getElementById('kelasPilih');
-
-    tingkatSelect.addEventListener('change', function() {
-      const selectedTingkat = this.value;
-      kelasSelect.innerHTML = '<option value="">-- Pilih Nama Kelas --</option>';
-
-      if (selectedTingkat) {
-        const filtered = dataKelas.filter(item => item.tingkat.toUpperCase() === selectedTingkat.toUpperCase());
-        filtered.forEach(item => {
-          const opt = document.createElement('option');
-          opt.value = item.nama;
-          opt.textContent = item.nama;
-          kelasSelect.appendChild(opt);
-        });
-      }
-    });
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

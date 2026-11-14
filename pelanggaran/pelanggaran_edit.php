@@ -21,25 +21,24 @@ if (!$current) {
     exit();
 }
 
-$q_tindakan_curr = mysqli_query($koneksi, "SELECT bentuk_tindakan FROM t_tindakan WHERE pelanggaran_siswa_id = '$id' LIMIT 1");
-$d_tindakan_curr = mysqli_fetch_assoc($q_tindakan_curr);
-$current_tindakan = $d_tindakan_curr['bentuk_tindakan'] ?? ($current['tindakan'] ?? '');
-
 $error = "";
 
 if (isset($_POST['update'])) {
     $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
     $kategori_id     = mysqli_real_escape_string($koneksi, $_POST['kategori_id'] ?? '');
     $tanggal         = mysqli_real_escape_string($koneksi, $_POST['tanggal'] ?? '');
-    $bentuk_tindakan = mysqli_real_escape_string($koneksi, $_POST['bentuk_tindakan'] ?? '');
     $keterangan      = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
 
-    if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal) && !empty($bentuk_tindakan)) {
-        $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$siswa_id' LIMIT 1");
+    if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal)) {
+        $q_s = mysqli_query($koneksi, "SELECT s.*, k.id AS k_id, k.nama AS nama_kls 
+                                       FROM t_siswa s 
+                                       LEFT JOIN t_kelas_siswa ks ON s.id = ks.siswa_id 
+                                       LEFT JOIN t_kelas k ON ks.kelas_id = k.id 
+                                       WHERE s.id = '$siswa_id' LIMIT 1");
         $d_s = mysqli_fetch_assoc($q_s);
         $nama_siswa  = $d_s['nama'] ?? 'Siswa';
-        $kelas_siswa = $d_s['kelas'] ?? '-';
-        $kelas_id    = $d_s['kelas_id'] ?? 1;
+        $kelas_siswa = $d_s['nama_kls'] ?? '-';
+        $kelas_id    = $d_s['k_id'] ?? 1;
 
         $q_get_poin = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
         $d_k = mysqli_fetch_assoc($q_get_poin);
@@ -55,20 +54,12 @@ if (isset($_POST['update'])) {
                       nama_pelanggaran = '$nama_pelanggaran',
                       poin = '$poin_val', 
                       tanggal = '$tanggal', 
-                      tindakan = '$bentuk_tindakan',
                       keterangan = '$keterangan' 
                   WHERE id = '$id'";
                   
         $result = mysqli_query($koneksi, $query);
 
         if ($result) {
-            $q_cek_t = mysqli_query($koneksi, "SELECT id FROM t_tindakan WHERE pelanggaran_siswa_id = '$id' LIMIT 1");
-            if (mysqli_num_rows($q_cek_t) > 0) {
-                mysqli_query($koneksi, "UPDATE t_tindakan SET bentuk_tindakan = '$bentuk_tindakan', tanggal_tindakan = '$tanggal' WHERE pelanggaran_siswa_id = '$id'");
-            } else {
-                mysqli_query($koneksi, "INSERT INTO t_tindakan (siswa_id, pelanggaran_siswa_id, bentuk_tindakan, tanggal_tindakan, status_penyelesaian) VALUES ('$siswa_id', '$id', '$bentuk_tindakan', '$tanggal', 'Diproses')");
-            }
-
             echo "<script>
                     alert('Data pelanggaran berhasil diperbarui!');
                     window.location.href = '../dashboard.php?tab=menu9';
@@ -78,7 +69,7 @@ if (isset($_POST['update'])) {
             $error = "Gagal memperbarui data: " . mysqli_error($koneksi);
         }
     } else {
-        $error = "Kolom Siswa, Kategori Pelanggaran, Tanggal, dan Bentuk Tindakan wajib diisi!";
+        $error = "Kolom Siswa, Kategori Pelanggaran, dan Tanggal wajib diisi!";
     }
 }
 ?>
@@ -95,8 +86,15 @@ if (isset($_POST['update'])) {
     .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
     .sidebar .nav-link-custom { color: rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 16px; margin-bottom: 8px; font-weight: 500; display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .sidebar .nav-link-custom:hover { color: #ffc107; background-color: rgba(255, 193, 7, 0.15); }
-    main { margin-left: 250px; padding-bottom: 80px; }
-    @media (max-width: 768px) { main { margin-left: 0; } }
+    main { 
+      margin-left: 250px; 
+      width: calc(100% - 250px);
+      padding: 30px;
+      padding-bottom: 100px; 
+    }
+    @media (max-width: 768px) { 
+      main { margin-left: 0; width: 100%; padding: 15px; } 
+    }
   </style>
 </head>
 <body>
@@ -147,10 +145,16 @@ if (isset($_POST['update'])) {
                   <select name="siswa_id" class="form-select py-2" required>
                     <option value="">-- Pilih Siswa --</option>
                     <?php
-                    $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
+                    $q_s = mysqli_query($koneksi, "SELECT s.*, k.nama AS nama_kls 
+                                                   FROM t_siswa s 
+                                                   LEFT JOIN t_kelas_siswa ks ON s.id = ks.siswa_id 
+                                                   LEFT JOIN t_kelas k ON ks.kelas_id = k.id 
+                                                   ORDER BY s.nama ASC");
                     while ($s = mysqli_fetch_assoc($q_s)) {
                         $selected = ($s['id'] == $current['siswa_id']) ? 'selected' : '';
-                        echo "<option value='{$s['id']}' {$selected}>{$s['nama']} (Kelas: " . htmlspecialchars($s['kelas'] ?? '-') . ")</option>";
+                        $nisn_str = !empty($s['nisn']) ? $s['nisn'] : '-';
+                        $kelas_str = !empty($s['nama_kls']) ? $s['nama_kls'] : '-';
+                        echo "<option value='{$s['id']}' {$selected}>" . htmlspecialchars($s['nama']) . " (NISN: {$nisn_str} - Kelas: {$kelas_str})</option>";
                     }
                     ?>
                   </select>
@@ -172,11 +176,6 @@ if (isset($_POST['update'])) {
                     ?>
                   </select>
                   <small class="text-muted mt-1 d-block">Poin otomatis: <span id="infoPoin" class="fw-bold text-danger"><?= htmlspecialchars($current['poin'] ?? 0); ?> Poin</span></small>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Bentuk Tindakan / Sanksi <span class="text-danger">*</span></label>
-                  <input type="text" name="bentuk_tindakan" class="form-control py-2" value="<?= htmlspecialchars($current_tindakan); ?>" placeholder="Ketik bentuk tindakan / sanksi di sini..." required>
                 </div>
 
                 <div class="mb-3">

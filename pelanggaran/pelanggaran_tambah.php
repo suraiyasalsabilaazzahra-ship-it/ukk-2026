@@ -24,15 +24,18 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
   $siswa_id        = mysqli_real_escape_string($koneksi, $_POST['siswa_id'] ?? '');
   $kategori_id     = mysqli_real_escape_string($koneksi, $_POST['kategori_id'] ?? '');
   $tanggal         = mysqli_real_escape_string($koneksi, $_POST['tanggal'] ?? date('Y-m-d'));
-  $bentuk_tindakan = mysqli_real_escape_string($koneksi, $_POST['bentuk_tindakan'] ?? '');
   $keterangan      = mysqli_real_escape_string($koneksi, $_POST['keterangan'] ?? '');
 
-  if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal) && !empty($bentuk_tindakan)) {
-    $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa WHERE id = '$siswa_id' LIMIT 1");
+  if (!empty($siswa_id) && !empty($kategori_id) && !empty($tanggal)) {
+    $q_s = mysqli_query($koneksi, "SELECT s.*, k.id AS k_id, k.nama AS nama_kls 
+                                   FROM t_siswa s 
+                                   LEFT JOIN t_kelas_siswa ks ON s.id = ks.siswa_id 
+                                   LEFT JOIN t_kelas k ON ks.kelas_id = k.id 
+                                   WHERE s.id = '$siswa_id' LIMIT 1");
     $d_s = mysqli_fetch_assoc($q_s);
     $nama_siswa  = $d_s['nama'] ?? 'Siswa';
-    $kelas_siswa = $d_s['kelas'] ?? '-';
-    $kelas_id    = $d_s['kelas_id'] ?? 1;
+    $kelas_siswa = $d_s['nama_kls'] ?? '-';
+    $kelas_id    = $d_s['k_id'] ?? 1;
 
     $q_k = mysqli_query($koneksi, "SELECT * FROM t_pelanggaran_kategori WHERE id = '$kategori_id' LIMIT 1");
     $d_k = mysqli_fetch_assoc($q_k);
@@ -40,22 +43,15 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
     $poin_val = (int)($d_k['poin'] ?? 0);
 
     $query_insert = "INSERT INTO t_pelanggaran_siswa 
-                     (siswa_id, nama_siswa, kelas_id, nama_kelas, pelanggaran_kategori_id, nama_pelanggaran, nama_guru, tanggal, keterangan, poin, tindakan, status) 
+                     (siswa_id, nama_siswa, kelas_id, nama_kelas, pelanggaran_kategori_id, nama_pelanggaran, nama_guru, tanggal, keterangan, poin, status) 
                      VALUES 
-                     ('$siswa_id', '$nama_siswa', '$kelas_id', '$kelas_siswa', '$kategori_id', '$nama_pelanggaran', '$nama_admin_login', '$tanggal', '$keterangan', '$poin_val', '$bentuk_tindakan', 'Aktif')";
+                     ('$siswa_id', '$nama_siswa', '$kelas_id', '$kelas_siswa', '$kategori_id', '$nama_pelanggaran', '$nama_admin_login', '$tanggal', '$keterangan', '$poin_val', 'Aktif')";
 
     $exec = mysqli_query($koneksi, $query_insert);
     if ($exec) {
-      $last_pelanggaran_id = mysqli_insert_id($koneksi);
-
-      @mysqli_query($koneksi, "INSERT INTO t_tindakan 
-                               (siswa_id, pelanggaran_siswa_id, bentuk_tindakan, tanggal_tindakan, status_penyelesaian) 
-                               VALUES 
-                               ('$siswa_id', '$last_pelanggaran_id', '$bentuk_tindakan', '$tanggal', 'Diproses')");
-
       $target_tab = ($role === 'Guru') ? 'menu2' : 'menu9';
       echo "<script>
-              alert('Berhasil! Data pelanggaran dan sanksi tindakan siswa telah dicatat.');
+              alert('Berhasil! Data pelanggaran siswa telah dicatat.');
               window.location.href = '../dashboard.php?tab={$target_tab}';
             </script>";
       exit();
@@ -63,7 +59,7 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
       $msg_error = "Gagal Simpan ke Database: " . mysqli_error($koneksi);
     }
   } else {
-    $msg_error = "Mohon lengkapi Siswa, Kategori Pelanggaran, Tanggal, dan Bentuk Tindakan!";
+    $msg_error = "Mohon lengkapi Siswa, Kategori Pelanggaran, dan Tanggal Kejadian!";
   }
 }
 ?>
@@ -73,9 +69,12 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catat Pelanggaran & Tindakan Siswa - UKK 2026</title>
+  <title>Catat Pelanggaran Siswa - UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -91,6 +90,7 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
       left: 0;
       width: 250px;
       z-index: 1000;
+      overflow-y: auto;
     }
 
     .sidebar .nav-link-custom {
@@ -113,7 +113,6 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
 
     main {
       margin-left: 250px;
-      padding-bottom: 80px;
     }
 
     @media (max-width: 768px) {
@@ -160,8 +159,8 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
       </div>
 
       <!-- KONTEN UTAMA -->
-      <main class="p-4">
-        <div class="container-fluid px-0">
+      <main class="col-md-9 col-lg-10 p-4 ms-auto">
+        <div class="container-fluid px-0 pb-5">
           <?php if (!empty($msg_error)): ?>
             <div class="alert alert-danger shadow-sm mb-3"><?= $msg_error; ?></div>
           <?php endif; ?>
@@ -169,19 +168,25 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
           <form action="" method="POST">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-5">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Catat Pelanggaran & Tindakan Siswa</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Catat Pelanggaran Siswa</h5>
               </div>
               <div class="card-body p-4 bg-white">
 
                 <div class="mb-3">
                   <label class="form-label fw-bold">Pilih Siswa <span class="text-danger">*</span></label>
-                  <select name="siswa_id" class="form-select py-2" required>
+                  <select name="siswa_id" id="searchSiswa" class="form-select py-2" required>
                     <option value="">-- Pilih Siswa --</option>
                     <?php
-                    $q_siswa = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
+                    $q_siswa = mysqli_query($koneksi, "SELECT s.*, k.nama AS nama_kls 
+                                                       FROM t_siswa s 
+                                                       LEFT JOIN t_kelas_siswa ks ON s.id = ks.siswa_id 
+                                                       LEFT JOIN t_kelas k ON ks.kelas_id = k.id 
+                                                       ORDER BY s.nama ASC");
                     if ($q_siswa) {
                       while ($s = mysqli_fetch_assoc($q_siswa)) {
-                        echo "<option value='{$s['id']}'>" . htmlspecialchars($s['nama']) . " (Kelas: " . htmlspecialchars($s['kelas'] ?? '-') . ")</option>";
+                        $nisn_str = !empty($s['nisn']) ? $s['nisn'] : '-';
+                        $kelas_str = !empty($s['nama_kls']) ? $s['nama_kls'] : '-';
+                        echo "<option value='{$s['id']}'>" . htmlspecialchars($s['nama']) . " (NISN: {$nisn_str} - Kelas: {$kelas_str})</option>";
                       }
                     }
                     ?>
@@ -207,11 +212,6 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label fw-bold">Bentuk Tindakan / Sanksi <span class="text-danger">*</span></label>
-                  <input type="string" name="bentuk_tindakan" class="form-control py-2" placeholder="Ketik bentuk tindakan / sanksi di sini..." required>
-                </div>
-
-                <div class="mb-3">
                   <label class="form-label fw-bold">Tanggal Kejadian <span class="text-danger">*</span></label>
                   <input type="date" name="tanggal" class="form-control py-2" value="<?= date('Y-m-d'); ?>" required>
                 </div>
@@ -223,7 +223,7 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
 
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
                   <a href="../dashboard.php?tab=<?= ($role === 'Guru') ? 'menu2' : 'menu9'; ?>" class="btn btn-secondary px-4 fw-bold">Batal</a>
-                  <button type="submit" name="btn_simpan_pelanggaran" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Simpan Pelanggaran & Tindakan</button>
+                  <button type="submit" name="btn_simpan_pelanggaran" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Simpan Pelanggaran</button>
                 </div>
 
               </div>
@@ -234,7 +234,18 @@ if (isset($_POST['btn_simpan_pelanggaran'])) {
     </div>
   </div>
 
+  <!-- jQuery & Select2 JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script>
+    $(document).ready(function() {
+        $('#searchSiswa').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Pilih Siswa --',
+            allowClear: true
+        });
+    });
+
     function updatePoinInfo(selectObj) {
       let selectedOption = selectObj.options[selectObj.selectedIndex];
       let poin = selectedOption.getAttribute('data-poin') || 0;

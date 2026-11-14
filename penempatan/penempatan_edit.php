@@ -23,7 +23,6 @@ if (!$current) {
     exit();
 }
 
-// Ambil tingkat dan nama kelas saat ini
 $q_kls_curr = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE id = '{$current['kelas_id']}'");
 $d_kls_curr = mysqli_fetch_assoc($q_kls_curr);
 $raw_curr_tingkat = trim($d_kls_curr['tingkat'] ?? '');
@@ -74,7 +73,8 @@ if (isset($_POST['update'])) {
             $result = mysqli_query($koneksi, $query);
 
             if ($result) {
-                mysqli_query($koneksi, "UPDATE t_siswa SET kelas_id = '$kelas_id', kelas = '$nama_kelas_sync', jurusan = '$jurusan_sync' WHERE id = '$siswa_id'");
+                // Sinkronisasi kelas, jurusan, DAN status aktif ke tabel t_siswa secara dua arah
+                mysqli_query($koneksi, "UPDATE t_siswa SET kelas_id = '$kelas_id', kelas = '$nama_kelas_sync', jurusan = '$jurusan_sync', status = '$status_aktif' WHERE id = '$siswa_id'");
 
                 echo "<script>
                         alert('Data penempatan dan sinkronisasi siswa berhasil diperbarui!');
@@ -100,6 +100,9 @@ if (isset($_POST['update'])) {
   <title>Edit Penempatan Siswa - UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
     .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
@@ -152,8 +155,8 @@ if (isset($_POST['update'])) {
 
                 <div class="mb-3">
                   <label class="form-label fw-bold">Pilih Siswa</label>
-                  <select name="siswa_id" class="form-select" required>
-                    <option value="">-- Pilih Siswa --</option>
+                  <select name="siswa_id" id="searchSiswa" class="form-select" required>
+                    <option value="">-- Ketik atau Pilih Nama Siswa --</option>
                     <?php
                     $q_s = mysqli_query($koneksi, "SELECT * FROM t_siswa ORDER BY nama ASC");
                     while ($s = mysqli_fetch_assoc($q_s)) {
@@ -220,17 +223,27 @@ if (isset($_POST['update'])) {
     </div>
   </div>
 
-  <!-- SCRIPT FILTER KELAS DINAMIS -->
+  <!-- jQuery & Select2 JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script>
+    $(document).ready(function() {
+        $('#searchSiswa').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Ketik atau Pilih Nama Siswa --',
+            allowClear: true
+        });
+    });
+
     const dataKelas = [
       <?php
       $q_all_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
       while ($dk = mysqli_fetch_assoc($q_all_kelas)) {
-          $raw_tingkat = trim($dk['tingkat']);
-          $norm_tingkat = strtoupper($raw_tingkat);
-          if ($raw_tingkat == '10') $norm_tingkat = 'X';
-          if ($raw_tingkat == '11') $norm_tingkat = 'XI';
-          if ($raw_tingkat == '12') $norm_tingkat = 'XII';
+          $raw_string = trim($dk['tingkat']);
+          $norm_tingkat = strtoupper($raw_string);
+          if ($raw_string == '10') $norm_tingkat = 'X';
+          if ($raw_string == '11') $norm_tingkat = 'XI';
+          if ($raw_string == '12') $norm_tingkat = 'XII';
           
           echo "{ id: '{$dk['id']}', tingkat: '{$norm_tingkat}', nama: '" . addslashes($dk['nama']) . "' },\n";
       }
@@ -264,7 +277,6 @@ if (isset($_POST['update'])) {
       }
     }
 
-    // Auto load data kelas saat halaman edit dimuat
     window.onload = function() {
       let currentKelas = "<?= addslashes($curr_nama_kelas); ?>";
       if (document.getElementById('tingkatPilih').value !== '') {

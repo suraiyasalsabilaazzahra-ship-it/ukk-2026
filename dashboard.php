@@ -31,12 +31,14 @@ $total_kelas_q = @mysqli_query($koneksi, "SELECT COUNT(*) as total FROM t_kelas"
 $total_kelas   = ($total_kelas_q) ? mysqli_fetch_assoc($total_kelas_q)['total'] : 0;
 
 // Konfigurasi Menu Berdasarkan Role
+// Konfigurasi Menu Berdasarkan Role
 if ($role === 'Guru') {
   $menus = [
     ['id' => 'dashboard', 'name' => 'Beranda Guru', 'icon' => 'bi-speedometer2'],
     ['id' => 'menu2', 'name' => 'Catat Pelanggaran', 'icon' => 'bi-exclamation-octagon'],
     ['id' => 'menu3', 'name' => 'Tindakan', 'icon' => 'bi-shield-check'],
     ['id' => 'menu4', 'name' => 'Profil Guru', 'icon' => 'bi-person-badge'],
+    ['id' => 'menu10', 'name' => 'Laporan Pelanggaran', 'icon' => 'bi-file-earmark-text'], // <-- TAMBAHKAN INI UNTUK GURU
     ['id' => 'menu_about', 'name' => 'About Me', 'icon' => 'bi-info-circle']
   ];
 } else {
