@@ -1,13 +1,19 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include '../koneksi.php';
+
+if (!$koneksi) {
+    die("Koneksi database gagal: " . mysqli_connect_error());
+}
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     header("Location: ../login.php");
     exit();
 }
 
-$role = $_SESSION['role'];
+$role = $_SESSION['role'] ?? 'Admin';
 $id = $_GET['id'] ?? '';
 if (empty($id)) {
     header("Location: ../dashboard.php?tab=menu3");
@@ -15,19 +21,25 @@ if (empty($id)) {
 }
 
 $id = mysqli_real_escape_string($koneksi, $id);
+
 $q_data = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE id = '$id'");
-$data   = mysqli_fetch_assoc($q_data);
+if (!$q_data) {
+    die("Query Error: " . mysqli_error($koneksi));
+}
+$data = mysqli_fetch_assoc($q_data);
 
 if (!$data) {
     echo "<script>alert('Data kelas tidak ditemukan!'); window.location.href='../dashboard.php?tab=menu3';</script>";
     exit();
 }
 
+$wali_saat_ini = $data['wali_kelas_id'] ?? '';
+
 // Ambil tahun ajaran aktif otomatis untuk sinkronisasi
 $tahun_sekarang = date('Y');
 $nama_ta_otomatis = $tahun_sekarang . '/' . ($tahun_sekarang + 1);
 $q_ta_auto = mysqli_query($koneksi, "SELECT id FROM t_tahun_ajaran WHERE nama = '$nama_ta_otomatis' LIMIT 1");
-$d_ta_auto = mysqli_fetch_assoc($q_ta_auto);
+$d_ta_auto = $q_ta_auto ? mysqli_fetch_assoc($q_ta_auto) : null;
 $default_ta_id = $d_ta_auto['id'] ?? null;
 
 if (isset($_POST['update'])) {
@@ -36,8 +48,8 @@ if (isset($_POST['update'])) {
     $jurusan       = mysqli_real_escape_string($koneksi, $_POST['jurusan']);
     $wali_kelas_id = !empty($_POST['wali_kelas_id']) ? (int)$_POST['wali_kelas_id'] : null;
 
-    // Validasi: Cek apakah guru sudah menjadi wali kelas di kelas lain (kecuali kelas ini sendiri)
     if ($wali_kelas_id) {
+        // Validasi: Cek apakah guru sudah menjadi wali kelas di kelas lain
         $cek_guru_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas WHERE wali_kelas_id = '$wali_kelas_id' AND id != '$id' LIMIT 1");
         if ($cek_guru_kelas && mysqli_num_rows($cek_guru_kelas) > 0) {
             echo "<script>alert('Gagal! Guru tersebut sudah menjadi wali kelas di kelas lain.'); window.history.back();</script>";
@@ -49,17 +61,14 @@ if (isset($_POST['update'])) {
     $query = "UPDATE t_kelas SET nama = '$nama_kelas', tingkat = '$tingkat', jurusan = '$jurusan', wali_kelas_id = $val_wali WHERE id = '$id'";
 
     if (mysqli_query($koneksi, $query)) {
-        
-        // SINKRONISASI KE TABEL t_wali_kelas
         if ($default_ta_id) {
             $cek_wk = mysqli_query($koneksi, "SELECT id FROM t_wali_kelas WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
-            
             if ($wali_kelas_id) {
-                if (mysqli_num_rows($cek_wk) > 0) {
+                if ($cek_wk && mysqli_num_rows($cek_wk) > 0) {
                     mysqli_query($koneksi, "UPDATE t_wali_kelas SET guru_id = '$wali_kelas_id' WHERE kelas_id = '$id' AND tahun_ajaran_id = '$default_ta_id'");
                 } else {
                     $q_max_wk = mysqli_query($koneksi, "SELECT MAX(id) AS max_id FROM t_wali_kelas");
-                    $r_max_wk = mysqli_fetch_assoc($q_max_wk);
+                    $r_max_wk = $q_max_wk ? mysqli_fetch_assoc($q_max_wk) : null;
                     $new_id_wk = ($r_max_wk['max_id'] ?? 0) + 1;
                     mysqli_query($koneksi, "INSERT INTO t_wali_kelas (id, guru_id, kelas_id, tahun_ajaran_id, status_aktif) VALUES ('$new_id_wk', '$wali_kelas_id', '$id', '$default_ta_id', '1')");
                 }
@@ -83,6 +92,8 @@ if (isset($_POST['update'])) {
   <title>Edit Data Kelas - UKK 2026</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
     .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; overflow-y: auto; }
@@ -94,14 +105,14 @@ if (isset($_POST['update'])) {
 <body>
   <div class="container-fluid">
     <div class="row">
-      <!-- SIDEBAR LENGKAP -->
+      <!-- SIDEBAR -->
       <div class="col-md-3 col-lg-2 sidebar p-3 text-white">
         <div class="d-flex align-items-center gap-2 mb-2 px-2 mt-2">
           <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
           <h4 class="mb-0 fw-bold fs-5">UKK System</h4>
         </div>
         <div class="px-2 mb-3">
-          <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-semibold"><i class="bi bi-person-check-fill me-1"></i><?= $role; ?></span>
+          <span class="badge bg-warning text-dark px-2 py-1 rounded-pill fw-semibold"><i class="bi bi-person-check-fill me-1"></i><?= htmlspecialchars($role); ?></span>
         </div>
         <hr class="text-white-50">
         <ul class="nav flex-column mb-auto">
@@ -120,15 +131,16 @@ if (isset($_POST['update'])) {
         </ul>
       </div>
 
-      <!-- KONTEN UTAMA (Rata Kiri & Penuh) -->
+      <!-- KONTEN UTAMA -->
       <main class="col-md-9 col-lg-10 p-4 ms-auto">
-        <div class="container-fluid py-2 px-0">
+        <div class="container-fluid px-0">
           <form action="" method="POST">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden w-100">
+            <div class="card shadow-lg border-0 rounded-3 overflow-hidden mb-5">
               <div class="card-header text-white p-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);">
                 <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Data Kelas</h5>
               </div>
               <div class="card-body p-4 bg-white">
+                
                 <div class="mb-3">
                   <label class="form-label fw-bold">Nama Kelas</label>
                   <input type="text" name="nama" class="form-control" value="<?= htmlspecialchars($data['nama'] ?? ''); ?>" required>
@@ -147,21 +159,36 @@ if (isset($_POST['update'])) {
                 </div>
                 <div class="mb-4">
                   <label class="form-label fw-bold">Wali Kelas</label>
-                  <select name="wali_kelas_id" class="form-select">
+                  <select name="wali_kelas_id" id="selectWaliKelas" class="form-select">
                     <option value="">-- Pilih Wali Kelas (Opsional) --</option>
                     <?php
+                    // Ambil semua guru, cek status_aktif == 1 atau yang sedang menjabat
                     $q_guru = mysqli_query($koneksi, "SELECT * FROM t_guru ORDER BY nama ASC");
-                    while ($g = mysqli_fetch_assoc($q_guru)) {
-                        $selected = (($data['wali_kelas_id'] ?? '') == $g['id']) ? 'selected' : '';
-                        echo "<option value='{$g['id']}' {$selected}>{$g['nama']}</option>";
+                    if ($q_guru) {
+                        while ($g = mysqli_fetch_assoc($q_guru)) {
+                            $is_aktif = ($g['status_aktif'] == 1);
+                            
+                            // Jika guru tidak aktif dan bukan wali kelas saat ini, lewati
+                            if (!$is_aktif && $g['id'] != $wali_saat_ini) {
+                                continue;
+                            }
+
+                            $selected = ($wali_saat_ini == $g['id']) ? 'selected' : '';
+                            $label_nonaktif = !$is_aktif ? ' [TIDAK AKTIF - Harap Ganti]' : '';
+                            echo "<option value='{$g['id']}' {$selected}>{$g['nama']} (NIP: {$g['nip']}){$label_nonaktif}</option>";
+                        }
                     }
                     ?>
                   </select>
+                  <small class="text-muted">Pilih guru berstatus <b>Aktif</b> sebagai wali kelas.</small>
                 </div>
+
+                <!-- TOMBOL AKSI -->
                 <div class="pt-3 border-top d-flex gap-2 justify-content-end">
                   <a href="../dashboard.php?tab=menu3" class="btn btn-secondary px-4 fw-bold">Batal</a>
                   <button type="submit" name="update" class="btn text-white px-4 fw-bold" style="background-color: #1b263b;">Update Kelas</button>
                 </div>
+
               </div>
             </div>
           </form>
@@ -169,6 +196,18 @@ if (isset($_POST['update'])) {
       </main>
     </div>
   </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#selectWaliKelas').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Pilih Wali Kelas (Opsional) --',
+        allowClear: true
+      });
+    });
+  </script>
 </body>
 </html>
