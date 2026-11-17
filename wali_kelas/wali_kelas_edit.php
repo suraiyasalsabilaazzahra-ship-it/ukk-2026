@@ -51,7 +51,7 @@ if (isset($_POST['update'])) {
         if ($cek_guru && mysqli_num_rows($cek_guru) > 0) {
             $error = "Gagal! Guru tersebut sudah bertugas sebagai wali kelas di kelas lain pada tahun ajaran ini.";
         } else {
-            // Cari ID kelas berdasarkan nama kelas atau ID (tanpa syarat tingkat agar lebih aman)
+            // Cari ID kelas berdasarkan nama kelas atau ID
             $q_cari_kelas = mysqli_query($koneksi, "SELECT id FROM t_kelas WHERE nama = '$kelas_pilih' OR id = '$kelas_pilih' LIMIT 1");
             
             if ($q_cari_kelas && mysqli_num_rows($q_cari_kelas) > 0) {
@@ -90,6 +90,9 @@ if (isset($_POST['update'])) {
     <title>Edit Wali Kelas - UKK 2026</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Select2 CSS & Bootstrap 5 Theme -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; color: #333; }
         .sidebar { background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%); min-height: 100vh; position: fixed; top: 0; left: 0; width: 250px; z-index: 1000; }
@@ -147,7 +150,7 @@ if (isset($_POST['update'])) {
                     <form action="" method="POST">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Pilih Guru (Wali Kelas)</label>
-                            <select name="guru_id" class="form-select" required>
+                            <select name="guru_id" id="selectGuru" class="form-select" required>
                                 <option value="">-- Pilih Guru --</option>
                                 <?php
                                 $q_g = mysqli_query($koneksi, "SELECT * FROM t_guru ORDER BY nama ASC");
@@ -214,8 +217,19 @@ if (isset($_POST['update'])) {
     </div>
   </div>
 
-  <!-- SCRIPT FILTER KELAS DINAMIS -->
+  <!-- jQuery & Select2 JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script>
+    $(document).ready(function() {
+      $('#selectGuru').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Pilih Guru --',
+        allowClear: true
+      });
+    });
+
     const dataKelas = [
       <?php
       $q_all_kelas = mysqli_query($koneksi, "SELECT * FROM t_kelas ORDER BY nama ASC");
@@ -265,6 +279,5 @@ if (isset($_POST['update'])) {
       }
     };
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
